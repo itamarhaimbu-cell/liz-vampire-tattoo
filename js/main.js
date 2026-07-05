@@ -4,9 +4,8 @@
 
   var WA_NUMBER = '97239503487'; // studio WhatsApp — swap here if the business uses a mobile line
   var GA_ID = ''; // paste the GA4 Measurement ID ('G-XXXXXXXXXX') to enable Google Analytics
-  // reduced-motion visitors get the same static layout as mobile (no pins/scrubs)
-  var isMobile = window.matchMedia('(max-width:820px)').matches ||
-    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var isSmall = window.matchMedia('(max-width:820px)').matches;        // layout choices only
+  var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches; // disables all scroll 3D
 
   /* ---------- conversion tracking ---------- */
   window.__events = [];
@@ -25,9 +24,9 @@
     window.gtag('config', GA_ID);
   }
 
-  /* ---------- Lenis smooth scroll ---------- */
+  /* ---------- Lenis smooth scroll (desktop only; touch scroll is native) ---------- */
   var lenis = null;
-  if (!isMobile && window.Lenis) {
+  if (!isSmall && !reducedMotion && window.Lenis) {
     lenis = new Lenis({ duration: 1.25, smoothWheel: true });
     window.__lenis = lenis;
   }
@@ -78,9 +77,10 @@
 
   function buildScrub(section) {
     var key = section.getAttribute('data-scrub');
-    var cfg = manifest[key];
+    // small screens get the lighter frame set when one exists
+    var cfg = (isSmall && manifest[key + '_m']) || manifest[key];
     var canvas = section.querySelector('.scrub-canvas');
-    if (!cfg || !canvas || isMobile) return;
+    if (!cfg || !canvas || reducedMotion) return;
     var ctx = canvas.getContext('2d');
     var frames = new Array(cfg.count); // ImageBitmap | HTMLImageElement
     var current = -1;
@@ -171,17 +171,13 @@
   (function buildHeroMask() {
     var section = document.getElementById('hero');
     var video = section.querySelector('.hero-video');
-    if (isMobile) {
-      video.src = 'assets/video/hero_sd.mp4';
-      return;
-    }
+    if (isSmall) video.src = 'assets/video/hero_sd.mp4';
+    if (reducedMotion) return; // static fallback (solid title) handled in CSS
     var canvas = section.querySelector('.mask-canvas');
     var ctx = canvas.getContext('2d');
     var MAX_SCALE = 34;
     var fontsReady = false;
     var lastScale = -1, lastFade = -1;
-    // zoom origin: inside the letter counters of "VAMPIRE" on the top line
-    var ORIGIN_X = 0.52, ORIGIN_Y = 0.41;
 
     document.fonts.load('10px "Suez One"').then(function () {
       return document.fonts.ready;
@@ -196,11 +192,32 @@
     window.addEventListener('resize', resize);
     resize();
 
+    // stencil layout per orientation: [text, fontSize, baselineY, tracking]
+    function stencilLines(w, h) {
+      if (h > w) { // portrait: three stacked lines
+        var big = Math.min(w * 0.21, h * 0.17);
+        return [
+          ['LIZ', big, 0.35, 0],
+          ['VAMPIRE', big, 0.48, 0],
+          ['TATTOO', big * 0.55, 0.585, 0.25]
+        ];
+      }
+      var bigL = Math.min(w * 0.155, h * 0.42);
+      return [
+        ['LIZ VAMPIRE', bigL, 0.44, 0],
+        ['TATTOO', bigL * 0.6, 0.66, 0.3]
+      ];
+    }
+    function zoomOrigin(w, h) {
+      // inside the letter counters of VAMPIRE on each layout
+      return h > w ? { x: 0.505, y: 0.45 } : { x: 0.52, y: 0.41 };
+    }
+
     function drawStencil(scale) {
       var w = canvas.width, h = canvas.height;
-      var big = Math.min(w * 0.155, h * 0.42);
-      var small = big * 0.6;
-      var cx = w * ORIGIN_X, cy = h * ORIGIN_Y;
+      var lines = stencilLines(w, h);
+      var o = zoomOrigin(w, h);
+      var cx = w * o.x, cy = h * o.y;
       ctx.clearRect(0, 0, w, h);
       ctx.fillStyle = '#060606';
       ctx.fillRect(0, 0, w, h);
@@ -212,21 +229,20 @@
       ctx.textBaseline = 'alphabetic';
       // punch the letters out of the black overlay
       ctx.globalCompositeOperation = 'destination-out';
-      ctx.font = big + 'px "Suez One"';
-      ctx.fillText('LIZ VAMPIRE', w / 2, h * 0.44);
-      ctx.font = small + 'px "Suez One"';
-      try { ctx.letterSpacing = (small * 0.3) + 'px'; } catch (e) {}
-      ctx.fillText('TATTOO', w / 2, h * 0.66);
+      lines.forEach(function (l) {
+        ctx.font = l[1] + 'px "Suez One"';
+        try { ctx.letterSpacing = (l[1] * l[3]) + 'px'; } catch (e) {}
+        ctx.fillText(l[0], w / 2, h * l[2]);
+      });
       // hairline bone rim so the title stays crisp over dark video moments
       ctx.globalCompositeOperation = 'source-over';
       ctx.strokeStyle = 'rgba(236,231,221,0.35)';
       ctx.lineWidth = Math.max(1, 1.2 / scale);
-      ctx.font = big + 'px "Suez One"';
-      try { ctx.letterSpacing = '0px'; } catch (e) {}
-      ctx.strokeText('LIZ VAMPIRE', w / 2, h * 0.44);
-      ctx.font = small + 'px "Suez One"';
-      try { ctx.letterSpacing = (small * 0.3) + 'px'; } catch (e) {}
-      ctx.strokeText('TATTOO', w / 2, h * 0.66);
+      lines.forEach(function (l) {
+        ctx.font = l[1] + 'px "Suez One"';
+        try { ctx.letterSpacing = (l[1] * l[3]) + 'px'; } catch (e) {}
+        ctx.strokeText(l[0], w / 2, h * l[2]);
+      });
       try { ctx.letterSpacing = '0px'; } catch (e) {}
       ctx.restore();
       ctx.globalCompositeOperation = 'source-over';
@@ -256,7 +272,7 @@
   /* ---------- STUDIO — film-strip horizontal pan ---------- */
   (function buildStudioStrip() {
     var section = document.getElementById('studio');
-    if (!section || isMobile) return;
+    if (!section || isSmall || reducedMotion) return; // touch gets a swipe carousel instead
     var track = section.querySelector('.strip-track');
     var maxShift = 0;
     function measure() {
@@ -315,6 +331,26 @@
       if (lenis) lenis.scrollTo(t, { offset: 0 }); else t.scrollIntoView({ behavior: 'smooth' });
     });
   });
+
+  /* ---------- mobile menu ---------- */
+  var menuBtn = document.getElementById('menuBtn');
+  var mobileMenu = document.getElementById('mobileMenu');
+  menuBtn.addEventListener('click', function () {
+    mobileMenu.hidden = false;
+    requestAnimationFrame(function () { mobileMenu.classList.add('open'); });
+    document.body.style.overflow = 'hidden';
+    track('menu_open');
+  });
+  function closeMenu() {
+    mobileMenu.classList.remove('open');
+    document.body.style.overflow = '';
+    setTimeout(function () { mobileMenu.hidden = true; }, 350);
+  }
+  document.getElementById('menuClose').addEventListener('click', closeMenu);
+  // capture phase: restore page scrolling BEFORE the shared anchor handler scrolls
+  mobileMenu.addEventListener('click', function (e) {
+    if (e.target.tagName === 'A') closeMenu();
+  }, true);
 
   /* ---------- gallery filter ---------- */
   var filterBtns = document.querySelectorAll('.gf');

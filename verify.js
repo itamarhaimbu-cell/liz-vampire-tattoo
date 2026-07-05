@@ -341,35 +341,103 @@ function check(name, ok, detail) {
     heroHeight: document.querySelector('#hero').offsetHeight,
     vh: innerHeight,
     mask: getComputedStyle(document.querySelector('.mask-canvas')).display,
+    solidTitle: getComputedStyle(document.querySelector('.hero-copy-mobile')).display,
     lenis: !!window.__lenis,
   }));
   await rm.close();
-  check('reduced motion: no pinned zoom, static layout',
-    rmState.heroHeight < rmState.vh * 1.3 && rmState.mask === 'none' && !rmState.lenis,
+  check('reduced motion: no pinned zoom, static layout + solid title',
+    rmState.heroHeight < rmState.vh * 1.3 && rmState.mask === 'none' && rmState.solidTitle === 'flex' && !rmState.lenis,
     JSON.stringify(rmState));
 
-  /* ================= MOBILE ================= */
+  /* ================= MOBILE (full 3D) ================= */
   const mp = await browser.newPage();
   await mp.setViewport({ width: 390, height: 844, isMobile: true, hasTouch: true });
+  const mpErrors = [];
+  mp.on('pageerror', (e) => mpErrors.push(e.message));
   await mp.goto(URL, { waitUntil: 'networkidle2', timeout: 60000 });
-  await new Promise(r => setTimeout(r, 2500));
+  await mp.waitForFunction('window.__heroReady === true', { timeout: 20000 });
+  await mp.evaluate(() => document.fonts.ready);
+  await new Promise(r => setTimeout(r, 1200));
+  await mp.screenshot({ path: SHOT('08-mobile-hero.png') });
+
+  // hamburger menu: open, navigate, close
+  const btnVisible = await mp.evaluate(() => getComputedStyle(document.getElementById('menuBtn')).display !== 'none');
+  await mp.tap('#menuBtn');
+  await new Promise(r => setTimeout(r, 600));
+  const menuState = await mp.evaluate(() => ({
+    open: document.getElementById('mobileMenu').classList.contains('open'),
+    links: document.querySelectorAll('#mobileMenu nav a').length,
+  }));
+  await mp.screenshot({ path: SHOT('13-mobile-menu.png') });
+  await mp.tap('#mobileMenu nav a[href="#gallery"]');
+  await new Promise(r => setTimeout(r, 1600));
+  const afterNav = await mp.evaluate(() => ({
+    closed: document.getElementById('mobileMenu').hidden,
+    galleryNear: Math.abs(document.querySelector('#gallery').getBoundingClientRect().top) < innerHeight * 1.2,
+  }));
+  check('mobile: hamburger menu opens, navigates, closes',
+    btnVisible && menuState.open && menuState.links === 7 && afterNav.closed && afterNav.galleryNear,
+    JSON.stringify({ btnVisible, menuState, afterNav }));
+
+  // hero ink-mask runs on mobile (portrait stencil over SD film)
+  await mp.evaluate(() => window.scrollTo(0, 0));
+  await new Promise(r => setTimeout(r, 600));
+  const mHero = await mp.evaluate(() => {
+    const c = document.querySelector('.mask-canvas');
+    const v = document.querySelector('.hero-video');
+    const ctx = c.getContext('2d');
+    const corner = ctx.getImageData(4, 4, 1, 1).data;
+    const row = ctx.getImageData(0, Math.round(c.height * 0.44), c.width, 1).data; // VAMPIRE glyph body
+    let holes = 0;
+    for (let x = 3; x < row.length; x += 4) if (row[x] < 20) holes++;
+    return {
+      maskShown: getComputedStyle(c).display !== 'none',
+      cornerAlpha: corner[3], holes,
+      playing: !v.paused && v.readyState > 2, videoWidth: v.videoWidth,
+    };
+  });
+  check('mobile: ink-mask hero active (portrait stencil + SD film)',
+    mHero.maskShown && mHero.cornerAlpha > 240 && mHero.holes > 20 && mHero.playing && mHero.videoWidth === 960,
+    JSON.stringify(mHero));
+
+  async function mScrollHeroP(p) {
+    await mp.evaluate((p) => {
+      const sec = document.querySelector('#hero');
+      window.scrollTo(0, (sec.offsetHeight - innerHeight) * p);
+    }, p);
+    await new Promise(r => setTimeout(r, 500));
+  }
+  await mScrollHeroP(0.5);
+  const mScale = await mp.evaluate(() => window.__scrubState.hero.scale);
+  await mp.screenshot({ path: SHOT('14-mobile-hero-mid.png') });
+  await mScrollHeroP(0.95);
+  const mLate = await mp.evaluate(() => window.__scrubState.hero);
+  check('mobile: hero zoom advances and dissolves',
+    mScale > 3 && mLate.maskOpacity < 0.05,
+    `scale@0.5=${mScale.toFixed(2)} fade@0.95=${mLate.maskOpacity}`);
+
+  // craft scrub on the light frame set
+  await mp.evaluate(() => {
+    const sec = document.querySelector('#craft');
+    window.scrollTo(0, sec.offsetTop + (sec.offsetHeight - innerHeight) * 0.5);
+  });
+  await new Promise(r => setTimeout(r, 1600));
+  const mLine = await mp.evaluate(() => (window.__scrubState.line || {}).frame);
+  check('mobile: craft scrub active on light frames', mLine > 10 && mLine < 65, `frame ${mLine} of 72`);
+
+  // studio swipe + sticky bar + clean console
   const mobStrip = await mp.evaluate(() => {
     const t = document.querySelector('.strip-track');
-    return { swipeable: t.scrollWidth > t.clientWidth + 50, transform: getComputedStyle(t).transform };
+    return {
+      swipeable: t.scrollWidth > t.clientWidth + 50,
+      transform: getComputedStyle(t).transform,
+      bar: getComputedStyle(document.querySelector('.mobile-bar')).display,
+    };
   });
-  check('mobile: studio strip is a swipe carousel', mobStrip.swipeable && (mobStrip.transform === 'none'), JSON.stringify(mobStrip));
-
-  const mob = await mp.evaluate(() => ({
-    bar: getComputedStyle(document.querySelector('.mobile-bar')).display,
-    mask: getComputedStyle(document.querySelector('.mask-canvas')).display,
-    title: getComputedStyle(document.querySelector('.hero-copy-mobile')).display,
-    videoWidth: document.querySelector('.hero-video').videoWidth,
-    playing: (function (v) { return !v.paused && !v.ended && v.readyState > 2; })(document.querySelector('.hero-video')),
-  }));
-  await mp.screenshot({ path: SHOT('08-mobile-hero.png') });
-  check('mobile: sticky bar + solid title over playing SD loop',
-    mob.bar === 'flex' && mob.playing && mob.videoWidth > 0 && mob.videoWidth < 1300 && mob.mask === 'none' && mob.title === 'flex',
-    JSON.stringify(mob));
+  check('mobile: studio swipe carousel + sticky bar',
+    mobStrip.swipeable && mobStrip.transform === 'none' && mobStrip.bar === 'flex',
+    JSON.stringify(mobStrip));
+  check('mobile: no page errors', mpErrors.length === 0, mpErrors.slice(0, 3).join(' | '));
 
   await browser.close();
   const failed = results.filter(r => !r.ok);

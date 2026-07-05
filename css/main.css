@@ -76,6 +76,41 @@ img{max-width:100%;display:block}
   justify-self:end;border:1px solid var(--bone);padding:.3rem 1.1rem;border-radius:999px;
   font-size:.95rem;font-weight:400;
 }
+#menuBtn{
+  display:none;background:none;border:none;cursor:pointer;padding:.7rem .4rem;
+  flex-direction:column;gap:7px;
+}
+#menuBtn span{display:block;width:26px;height:2px;background:var(--bone)}
+
+/* ---------- mobile menu overlay ---------- */
+#mobileMenu{
+  position:fixed;inset:0;z-index:9300;background:var(--black);
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;transition:opacity .35s ease;
+}
+#mobileMenu[hidden]{display:none}
+#mobileMenu.open{opacity:1}
+#mobileMenu nav{display:flex;flex-direction:column;gap:1.7rem;text-align:center}
+#mobileMenu nav a{
+  font-family:var(--serif);font-size:2rem;color:var(--bone);
+  opacity:0;transform:translateY(16px);
+  transition:opacity .45s ease,transform .45s ease;
+}
+#mobileMenu.open nav a{opacity:1;transform:none}
+#mobileMenu nav a:nth-child(2){transition-delay:.05s}
+#mobileMenu nav a:nth-child(3){transition-delay:.1s}
+#mobileMenu nav a:nth-child(4){transition-delay:.15s}
+#mobileMenu nav a:nth-child(5){transition-delay:.2s}
+#mobileMenu nav a:nth-child(6){transition-delay:.25s}
+#mobileMenu nav a:nth-child(7){transition-delay:.3s}
+#mobileMenu .menu-cta{
+  font-family:var(--sans);font-size:1.1rem;letter-spacing:.12em;
+  background:var(--bone);color:var(--black);padding:.85rem 2.6rem;margin-top:1.2rem;
+}
+#menuClose{
+  position:absolute;top:1.4rem;left:1.6rem;background:none;border:1px solid var(--line);
+  color:var(--bone);width:2.6rem;height:2.6rem;border-radius:50%;cursor:pointer;font-size:1rem;
+}
 
 /* ---------- HERO — ink mask: film inside the letters, zoom through ---------- */
 .hero-mask{position:relative;height:320vh}
@@ -390,24 +425,24 @@ footer{
 /* ---------- mobile bar ---------- */
 .mobile-bar{display:none}
 
-/* ============ MOBILE ============ */
+/* ============ MOBILE — full 3D stays on; layout adapts ============ */
 @media (max-width:820px){
-  .topbar{grid-template-columns:auto 1fr auto}
-  .topbar nav{display:none}
-  .scrub-section{height:auto}
-  .hero-mask{height:auto}
-  .mask-canvas{display:none}
-  .hero-copy-mobile{
-    display:flex;position:relative;z-index:3;
-    align-items:center;justify-content:center;text-align:center;padding:0 1.2rem;
-  }
-  .hero-sub{position:relative;bottom:auto;right:auto;transform:none;text-align:center;margin-top:1.2rem;white-space:normal}
-  .pin{position:relative;height:100svh;display:flex;flex-direction:column;justify-content:center}
-  .scrub-canvas{display:none}
-  .scrub-fallback{display:block}
-  .stage{opacity:1;transform:none}
-  .stage-line{position:relative;top:auto;right:auto;transform:none;margin:1.2rem auto;width:92%}
-  .scroll-hint{display:none}
+  .topbar{display:flex;justify-content:space-between;align-items:center}
+  .topbar nav,.nav-cta{display:none}
+  #menuBtn{display:flex}
+
+  /* pinned 3D sections: shorter travel for thumbs, svh against the URL bar */
+  .hero-mask{height:250vh}
+  .scrub-section{height:220vh}
+  .pin{height:100svh}
+  .hero-sub{bottom:22vh;font-size:1rem}
+  #hero .scroll-hint{bottom:calc(72px + env(safe-area-inset-bottom))}
+  .hint-bar{height:34px}
+  .stage-line{width:94%;font-size:clamp(1.5rem,6.5vw,2.4rem);padding:1.8rem .6rem}
+
+  /* let Hebrew wrap naturally on narrow screens */
+  .story-p br,.artist-bio br,.stage-line br{display:none}
+
   .strip-section{height:auto}
   .strip-pin{position:relative;height:auto;display:block;padding:4rem 0}
   .strip-track{
@@ -421,12 +456,19 @@ footer{
   .sframe{width:78vw;scroll-snap-align:center}
   .artists-grid{grid-template-columns:1fr}
   .gallery-grid{grid-template-columns:repeat(2,1fr);gap:.7rem}
+  .gallery-filters{gap:.5rem}
+  .gf{font-size:.9rem;padding:.45rem 1.1rem}
   .frow{flex-direction:column;gap:0}
   .contact-grid{grid-template-columns:1fr}
   .academy-inner{flex-direction:column;text-align:center}
-  body{padding-bottom:64px}
+  .consult-inner h2{font-size:clamp(2.4rem,11vw,3.4rem)}
+  .booking-inner h2{font-size:clamp(1.7rem,7.5vw,2.4rem)}
+  .proof-score{font-size:1.5rem}
+  body{padding-bottom:calc(60px + env(safe-area-inset-bottom))}
   .mobile-bar{
-    display:flex;position:fixed;bottom:0;right:0;left:0;z-index:8500;height:60px;
+    display:flex;position:fixed;bottom:0;right:0;left:0;z-index:8500;
+    height:calc(60px + env(safe-area-inset-bottom));
+    padding-bottom:env(safe-area-inset-bottom);
     background:rgba(6,6,6,.92);backdrop-filter:blur(12px);border-top:1px solid var(--line);
   }
   .mobile-bar a{
