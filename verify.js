@@ -1,0 +1,378 @@
+// end-to-end verification: node verify.js
+const puppeteer = require('puppeteer-core');
+const path = require('path');
+
+const URL = 'http://localhost:4173/';
+const EDGE = 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe';
+const SHOT = (n) => path.join(__dirname, 'verify-shots', n);
+
+const results = [];
+function check(name, ok, detail) {
+  results.push({ name, ok, detail });
+  console.log((ok ? 'PASS' : 'FAIL') + '  ' + name + (detail ? '  — ' + detail : ''));
+}
+
+(async () => {
+  require('fs').mkdirSync(path.join(__dirname, 'verify-shots'), { recursive: true });
+  const browser = await puppeteer.launch({ executablePath: EDGE, headless: 'new', args: ['--no-sandbox'] });
+
+  /* ================= DESKTOP ================= */
+  const page = await browser.newPage();
+  await page.setViewport({ width: 1440, height: 900 });
+  const consoleErrors = [];
+  page.on('console', (m) => { if (m.type() === 'error') consoleErrors.push(m.text()); });
+  page.on('pageerror', (e) => consoleErrors.push('pageerror: ' + e.message));
+
+  await page.goto(URL, { waitUntil: 'networkidle2', timeout: 60000 });
+  await page.waitForFunction('window.__heroReady === true', { timeout: 20000 });
+  await page.evaluate(() => document.fonts.ready);
+  await new Promise(r => setTimeout(r, 2200)); // let the staggered title entrance finish
+  await page.screenshot({ path: SHOT('01-hero-top.png') });
+
+  // fonts actually loaded
+  const fonts = await page.evaluate(() => ({
+    suez: document.fonts.check('16px "Suez One"'),
+    assistant: document.fonts.check('16px "Assistant"'),
+  }));
+  check('Suez One + Assistant loaded', fonts.suez && fonts.assistant, JSON.stringify(fonts));
+
+  // hero: HD video playing behind canvas stencil, subtitle visible
+  const hero = await page.evaluate(() => {
+    const v = document.querySelector('.hero-video');
+    return {
+      playing: !v.paused && !v.ended && v.readyState > 2,
+      videoWidth: v.videoWidth,
+      subOpacity: parseFloat(getComputedStyle(document.querySelector('.hero-sub')).opacity),
+    };
+  });
+  check('hero video playing behind stencil (HD rendition)', hero.playing && hero.videoWidth >= 1900, JSON.stringify(hero));
+  check('hero subtitle visible at top', hero.subOpacity > 0.9, 'opacity=' + hero.subOpacity);
+
+  // stencil pixels at top: corner opaque black, letterforms punched transparent
+  const stencil = await page.evaluate(() => {
+    const c = document.querySelector('.mask-canvas');
+    const ctx = c.getContext('2d');
+    const corner = ctx.getImageData(8, 8, 1, 1).data;
+    const row = ctx.getImageData(0, Math.round(c.height * 0.40), c.width, 1).data;
+    let holes = 0;
+    for (let x = 3; x < row.length; x += 4) if (row[x] < 20) holes++;
+    return { cornerAlpha: corner[3], cornerLum: corner[0], holePx: holes, rowW: c.width };
+  });
+  check('stencil drawn: black overlay + transparent letters',
+    stencil.cornerAlpha > 240 && stencil.cornerLum < 20 && stencil.holePx > stencil.rowW * 0.05,
+    JSON.stringify(stencil));
+
+  async function scrollToHeroP(p) {
+    await page.evaluate((p) => {
+      const sec = document.querySelector('#hero');
+      const y = (sec.offsetHeight - window.innerHeight) * p;
+      if (window.__lenis) window.__lenis.scrollTo(y, { immediate: true }); else window.scrollTo(0, y);
+    }, p);
+    await new Promise(r => setTimeout(r, 500));
+  }
+  const sampleGrid = () => page.evaluate(() => {
+    const c = document.querySelector('.mask-canvas');
+    const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+    const grid = [];
+    const step = 80;
+    for (let y = 0; y < c.height; y += step)
+      for (let x = 0; x < c.width; x += step)
+        grid.push(d[(y * c.width + x) * 4 + 3] > 128 ? 1 : 0);
+    return grid;
+  });
+
+  // zoom advances, viewport travels through a letter opening, dissolves at end
+  const s0 = await page.evaluate(() => window.__scrubState.hero.scale);
+  await scrollToHeroP(0.35);
+  const gridDown = await sampleGrid();
+  const s35 = await page.evaluate(() => window.__scrubState.hero.scale);
+  await scrollToHeroP(0.5);
+  const gridMid = await sampleGrid();
+  await page.screenshot({ path: SHOT('02-hero-mid.png') });
+  const transparentShare = 1 - gridMid.reduce((a, b) => a + b, 0) / gridMid.length;
+  check('mid-zoom passes through a letter opening', transparentShare > 0.25, `transparent share at p=0.5: ${(transparentShare * 100).toFixed(0)}%`);
+  const lineMid = await page.evaluate(() => parseFloat(getComputedStyle(document.querySelector('#hero .stage-line')).opacity));
+  await scrollToHeroP(0.95);
+  const late = await page.evaluate(() => window.__scrubState.hero);
+  const line95 = await page.evaluate(() => parseFloat(getComputedStyle(document.querySelector('#hero .stage-line')).opacity));
+  await page.screenshot({ path: SHOT('03-hero-late.png') });
+  await scrollToHeroP(1.0);
+  const line100 = await page.evaluate(() => parseFloat(getComputedStyle(document.querySelector('#hero .stage-line')).opacity));
+  check('ink-mask zoom advances with scroll', s0 < s35 && s35 < late.scale, `scale ${s0.toFixed(2)} -> ${s35.toFixed(2)} -> ${late.scale.toFixed(2)}`);
+  check('ink-mask dissolves at end (full video)', late.maskOpacity < 0.05, `maskOpacity=${late.maskOpacity}`);
+  check('closing line appears late and persists to section end',
+    lineMid < 0.1 && line95 > 0.9 && line100 > 0.9,
+    `opacity p0.5=${lineMid} p0.95=${line95} p1.0=${line100}`);
+
+  // REVERSE-SCROLL REGRESSION: stencil must be identical on the way back up
+  await scrollToHeroP(0.35);
+  const gridUp = await sampleGrid();
+  const cssOpacityUp = await page.evaluate(() =>
+    parseFloat(getComputedStyle(document.querySelector('.mask-canvas')).opacity));
+  await page.screenshot({ path: SHOT('09-hero-return.png') });
+  let mismatch = 0;
+  for (let i = 0; i < gridDown.length; i++) if (gridDown[i] !== gridUp[i]) mismatch++;
+  const mismatchPct = (100 * mismatch / gridDown.length);
+  const opaqueShare = gridUp.reduce((a, b) => a + b, 0) / gridUp.length;
+  check('reverse scroll: stencil identical on the way back up',
+    mismatchPct < 1 && opaqueShare > 0.1 && opaqueShare < 0.9 && cssOpacityUp > 0.95,
+    `grid mismatch ${mismatchPct.toFixed(2)}% opaqueShare=${opaqueShare.toFixed(2)} cssOpacity=${cssOpacityUp}`);
+  await scrollToHeroP(0);
+
+  // craft scrub
+  await page.evaluate(() => {
+    const sec = document.querySelector('#craft');
+    const y = sec.offsetTop + (sec.offsetHeight - innerHeight) * 0.5;
+    if (window.__lenis) window.__lenis.scrollTo(y, { immediate: true }); else window.scrollTo(0, y);
+  });
+  await new Promise(r => setTimeout(r, 1200));
+  const lineFrame = await page.evaluate(() => (window.__scrubState.line || {}).frame);
+  await page.screenshot({ path: SHOT('04-craft.png') });
+  check('craft scrub active', lineFrame > 20 && lineFrame < 90, `line frame ${lineFrame} of 97`);
+
+  // gallery hover -> color
+  await page.evaluate(() => {
+    const g = document.querySelector('#gallery');
+    if (window.__lenis) window.__lenis.scrollTo(g, { immediate: true }); else g.scrollIntoView();
+  });
+  await new Promise(r => setTimeout(r, 900));
+  const before = await page.evaluate(() => getComputedStyle(document.querySelector('.gitem img')).filter);
+  const img = await page.$('.gitem img');
+  await img.hover();
+  await new Promise(r => setTimeout(r, 900));
+  const after = await page.evaluate(() => getComputedStyle(document.querySelector('.gitem img')).filter);
+  await page.screenshot({ path: SHOT('05-gallery-hover.png') });
+  check('gallery blooms to color on hover',
+    /grayscale\(1\)/.test(before) && /grayscale\(0\)/.test(after),
+    `before="${before}" after="${after}"`);
+
+  // filter
+  await page.click('.gf[data-filter="color"]');
+  await new Promise(r => setTimeout(r, 300));
+  const visCount = await page.evaluate(() => document.querySelectorAll('.gitem:not(.hide)').length);
+  check('gallery filter works', visCount === 1, `visible after "color" filter: ${visCount}`);
+  await page.click('.gf[data-filter="all"]');
+
+  // styles list: floating photo card on hover + click filters gallery
+  await page.evaluate(() => {
+    const s = document.querySelector('#styles');
+    if (window.__lenis) window.__lenis.scrollTo(s, { immediate: true }); else s.scrollIntoView();
+  });
+  await new Promise(r => setTimeout(r, 900));
+  const li = await page.$('.styles-list li[data-style="color"]');
+  const posBefore = await page.evaluate(() =>
+    getComputedStyle(document.querySelector('.styles-list li[data-style="color"]')).backgroundPosition);
+  await li.hover();
+  await new Promise(r => setTimeout(r, 750)); // let the .55s sweep finish
+  const sweep = await page.evaluate(() => {
+    const el = document.querySelector('.styles-list li[data-style="color"]');
+    const cs = getComputedStyle(el);
+    const sibling = getComputedStyle(document.querySelector('.styles-list li[data-style="realism"]'));
+    return { pos: cs.backgroundPosition, clip: cs.webkitBackgroundClip || cs.backgroundClip, siblingOpacity: parseFloat(sibling.opacity) };
+  });
+  await page.screenshot({ path: SHOT('12-style-sweep.png') });
+  check('style hover: ink fill sweeps through the word',
+    posBefore !== sweep.pos && sweep.pos.startsWith('100%') && sweep.clip === 'text' && sweep.siblingOpacity < 0.5,
+    `pos ${posBefore} -> ${sweep.pos}, clip=${sweep.clip}, sibling=${sweep.siblingOpacity}`);
+  await li.click();
+  await new Promise(r => setTimeout(r, 1200));
+  const styleFilter = await page.evaluate(() => ({
+    active: document.querySelector('.gf.active').getAttribute('data-filter'),
+    visible: document.querySelectorAll('.gitem:not(.hide)').length,
+    nearGallery: Math.abs(document.querySelector('#gallery').getBoundingClientRect().top) < innerHeight,
+  }));
+  check('style click filters gallery + scrolls to it',
+    styleFilter.active === 'color' && styleFilter.visible === 1 && styleFilter.nearGallery,
+    JSON.stringify(styleFilter));
+  await page.click('.gf[data-filter="all"]');
+  await new Promise(r => setTimeout(r, 300));
+
+  // studio film strip pans with scroll
+  async function scrollToStudioP(p) {
+    await page.evaluate((p) => {
+      const sec = document.querySelector('#studio');
+      const y = sec.offsetTop + (sec.offsetHeight - innerHeight) * p;
+      if (window.__lenis) window.__lenis.scrollTo(y, { immediate: true }); else window.scrollTo(0, y);
+    }, p);
+    await new Promise(r => setTimeout(r, 500));
+  }
+  await scrollToStudioP(0.2);
+  const st20 = await page.evaluate(() => window.__scrubState.studio);
+  await scrollToStudioP(0.5);
+  await page.screenshot({ path: SHOT('10-studio.png') });
+  await scrollToStudioP(0.95);
+  const st95 = await page.evaluate(() => window.__scrubState.studio);
+  check('studio strip pans with scroll',
+    st20.x < st95.x && st95.max > 0 && st95.x > st95.max * 0.9,
+    `x ${Math.round(st20.x)} -> ${Math.round(st95.x)} of ${Math.round(st95.max)}`);
+  const studioImgs = await page.evaluate(() =>
+    [...document.querySelectorAll('.sframe img')].map(i => i.naturalWidth));
+  check('studio photos loaded', studioImgs.length === 4 && studioImgs.every(w => w > 0), JSON.stringify(studioImgs));
+
+  // lightbox with navigation (arrows, keys, wheel)
+  await page.click('.gitem img');
+  await new Promise(r => setTimeout(r, 400));
+  const lbOpen = await page.evaluate(() => !document.getElementById('lightbox').hidden);
+  const src1 = await page.evaluate(() => document.getElementById('lbImg').src);
+  await page.click('#lbNext');
+  await new Promise(r => setTimeout(r, 150));
+  const src2 = await page.evaluate(() => document.getElementById('lbImg').src);
+  await page.keyboard.press('ArrowLeft'); // RTL: forward
+  await new Promise(r => setTimeout(r, 150));
+  const src3 = await page.evaluate(() => document.getElementById('lbImg').src);
+  await new Promise(r => setTimeout(r, 400)); // clear wheel debounce
+  await page.mouse.move(720, 450);
+  await page.mouse.wheel({ deltaY: 240 });
+  await new Promise(r => setTimeout(r, 200));
+  const src4 = await page.evaluate(() => document.getElementById('lbImg').src);
+  await page.screenshot({ path: SHOT('06-lightbox.png') });
+  await page.click('#lbClose');
+  check('lightbox opens + navigates via arrow/key/wheel',
+    lbOpen && src2 !== src1 && src3 !== src2 && src4 !== src3,
+    [src1, src2, src3, src4].map(s => s.split('/').pop()).join(' -> '));
+
+  // nav centered
+  const nav = await page.evaluate(() => {
+    const r = document.querySelector('.topbar nav').getBoundingClientRect();
+    const navCenter = r.left + r.width / 2;
+    return { navCenter, viewCenter: innerWidth / 2 };
+  });
+  check('nav links centered', Math.abs(nav.navCenter - nav.viewCenter) < 8, JSON.stringify(nav));
+
+  // WhatsApp handoff
+  await page.evaluate(() => {
+    const b = document.querySelector('#booking');
+    if (window.__lenis) window.__lenis.scrollTo(b, { immediate: true }); else b.scrollIntoView();
+  });
+  await new Promise(r => setTimeout(r, 700));
+  await page.type('#waForm [name=name]', 'דנה לוי');
+  await page.type('#waForm [name=phone]', '0501234567');
+  await page.select('#waForm [name=style]', 'ריאליזם');
+  await page.type('#waForm [name=placement]', 'זרוע');
+  await page.type('#waForm [name=idea]', 'אריה ריאליסטי');
+  await page.screenshot({ path: SHOT('07-booking-filled.png') });
+  let popupCreated = false;
+  browser.once('targetcreated', () => { popupCreated = true; });
+  await page.click('#waForm button[type=submit]');
+  await new Promise(r => setTimeout(r, 3000));
+  const popupUrl = browser.targets().map(t => t.url()).find(u => u.includes('wa.me') || u.includes('whatsapp.com')) || null;
+  const waUrl = await page.evaluate(() => window.__lastWaUrl);
+  const decoded = waUrl ? decodeURIComponent(waUrl) : '';
+  check('WhatsApp handoff builds correct URL',
+    !!waUrl && waUrl.startsWith('https://wa.me/97239503487?text=') &&
+    decoded.includes('דנה לוי') && decoded.includes('0501234567') && decoded.includes('ריאליזם') &&
+    popupCreated && !!popupUrl,
+    `popup=${popupCreated ? 'opened' : 'NONE'} popupUrl=${popupUrl} form-url-ok=${decoded.includes('דנה לוי') && decoded.includes('0501234567')}`);
+  for (const p of await browser.pages()) { if (p !== page && p.url().includes('whatsapp')) await p.close().catch(() => {}); }
+
+  // social proof strip
+  const proof = await page.evaluate(() => {
+    const s = document.querySelector('#proof');
+    return {
+      text: s ? s.textContent : '',
+      link: (document.querySelector('.proof-link') || {}).href || '',
+      stars: !!document.querySelector('#proof .stars'),
+    };
+  });
+  check('social proof strip: 4.6 / 244 + Google link',
+    proof.text.includes('4.6') && proof.text.includes('244') && proof.stars && proof.link.includes('google.com/maps'),
+    proof.link);
+
+  // SEO metadata
+  const seo = await page.evaluate(() => {
+    const og = document.querySelector('meta[property="og:image"]');
+    let ld = null;
+    try { ld = JSON.parse(document.querySelector('script[type="application/ld+json"]').textContent); } catch (e) {}
+    return {
+      ogImage: og ? og.content : null,
+      ldType: ld && ld['@type'],
+      reviewCount: ld && ld.aggregateRating && ld.aggregateRating.reviewCount,
+      poster: document.querySelector('.hero-video').getAttribute('poster'),
+    };
+  });
+  const posterOk = seo.poster && (await page.evaluate(async (p) => (await fetch(p)).ok, seo.poster));
+  check('OG image + JSON-LD (244 reviews) + hero poster',
+    !!seo.ogImage && seo.ldType === 'TattooParlor' && seo.reviewCount === 244 && posterOk,
+    JSON.stringify(seo));
+
+  // FAQ accordion
+  const faqCount = await page.evaluate(() => document.querySelectorAll('#faq details').length);
+  await page.click('#faq details:first-of-type summary');
+  await new Promise(r => setTimeout(r, 300));
+  const faqOpen = await page.evaluate(() => document.querySelector('#faq details').open);
+  check('FAQ: 5 items, accordion opens', faqCount === 5 && faqOpen, `items=${faqCount} open=${faqOpen}`);
+
+  // conversion tracking recorded the earlier WhatsApp submit
+  const events = await page.evaluate(() => (window.__events || []).map(e => e.name));
+  check('conversion tracking records events', events.includes('wa_form_submit'), JSON.stringify(events));
+
+  // academy strip
+  const academy = await page.evaluate(() => {
+    const a = document.querySelector('#academy a');
+    const bg = getComputedStyle(document.getElementById('academy')).backgroundColor;
+    return { href: a.href, bg };
+  });
+  check('academy inverted strip links out', academy.href === 'https://www.lizvampireacademy.com/' && academy.bg !== 'rgb(6, 6, 6)', JSON.stringify(academy));
+
+  check('no console errors (desktop)', consoleErrors.length === 0, consoleErrors.slice(0, 3).join(' | '));
+
+  // custom 404 (after the console check — this fetch legitimately logs a 404)
+  const notFound = await page.evaluate(async () => {
+    const r = await fetch('/does-not-exist-xyz');
+    return { status: r.status, body: await r.text() };
+  });
+  check('custom 404 page served', notFound.status === 404 && notFound.body.includes('404') && notFound.body.includes('קעקוע'), `status=${notFound.status}`);
+
+  // screenshot of proof + faq
+  await page.evaluate(() => {
+    const s = document.querySelector('#proof');
+    if (window.__lenis) window.__lenis.scrollTo(s, { immediate: true }); else s.scrollIntoView();
+  });
+  await new Promise(r => setTimeout(r, 900));
+  await page.screenshot({ path: SHOT('11-proof-faq.png') });
+
+  /* ================= REDUCED MOTION ================= */
+  const rm = await browser.newPage();
+  await rm.setViewport({ width: 1440, height: 900 });
+  await rm.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'reduce' }]);
+  await rm.goto(URL, { waitUntil: 'networkidle2', timeout: 60000 });
+  await new Promise(r => setTimeout(r, 2000));
+  const rmState = await rm.evaluate(() => ({
+    heroHeight: document.querySelector('#hero').offsetHeight,
+    vh: innerHeight,
+    mask: getComputedStyle(document.querySelector('.mask-canvas')).display,
+    lenis: !!window.__lenis,
+  }));
+  await rm.close();
+  check('reduced motion: no pinned zoom, static layout',
+    rmState.heroHeight < rmState.vh * 1.3 && rmState.mask === 'none' && !rmState.lenis,
+    JSON.stringify(rmState));
+
+  /* ================= MOBILE ================= */
+  const mp = await browser.newPage();
+  await mp.setViewport({ width: 390, height: 844, isMobile: true, hasTouch: true });
+  await mp.goto(URL, { waitUntil: 'networkidle2', timeout: 60000 });
+  await new Promise(r => setTimeout(r, 2500));
+  const mobStrip = await mp.evaluate(() => {
+    const t = document.querySelector('.strip-track');
+    return { swipeable: t.scrollWidth > t.clientWidth + 50, transform: getComputedStyle(t).transform };
+  });
+  check('mobile: studio strip is a swipe carousel', mobStrip.swipeable && (mobStrip.transform === 'none'), JSON.stringify(mobStrip));
+
+  const mob = await mp.evaluate(() => ({
+    bar: getComputedStyle(document.querySelector('.mobile-bar')).display,
+    mask: getComputedStyle(document.querySelector('.mask-canvas')).display,
+    title: getComputedStyle(document.querySelector('.hero-copy-mobile')).display,
+    videoWidth: document.querySelector('.hero-video').videoWidth,
+    playing: (function (v) { return !v.paused && !v.ended && v.readyState > 2; })(document.querySelector('.hero-video')),
+  }));
+  await mp.screenshot({ path: SHOT('08-mobile-hero.png') });
+  check('mobile: sticky bar + solid title over playing SD loop',
+    mob.bar === 'flex' && mob.playing && mob.videoWidth > 0 && mob.videoWidth < 1300 && mob.mask === 'none' && mob.title === 'flex',
+    JSON.stringify(mob));
+
+  await browser.close();
+  const failed = results.filter(r => !r.ok);
+  console.log('\n' + (failed.length ? `${failed.length} FAILED` : 'ALL ' + results.length + ' CHECKS PASSED'));
+  process.exit(failed.length ? 1 : 0);
+})().catch((e) => { console.error('VERIFY CRASHED:', e); process.exit(2); });

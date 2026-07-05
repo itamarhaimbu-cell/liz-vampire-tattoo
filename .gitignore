@@ -1,0 +1,6 @@
+node_modules/
+verify-shots/
+assets/video/*_raw.mp4
+assets/video/machine.mp4
+assets/frames/hero/
+assets/frames/machine/
