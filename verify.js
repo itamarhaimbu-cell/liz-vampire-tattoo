@@ -2,7 +2,7 @@
 const puppeteer = require('puppeteer-core');
 const path = require('path');
 
-const URL = 'http://localhost:4173/';
+const URL = process.env.SITE_URL || 'http://localhost:4173/';
 const EDGE = 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe';
 const SHOT = (n) => path.join(__dirname, 'verify-shots', n);
 
@@ -318,7 +318,7 @@ function check(name, ok, detail) {
 
   // custom 404 (after the console check — this fetch legitimately logs a 404)
   const notFound = await page.evaluate(async () => {
-    const r = await fetch('/does-not-exist-xyz');
+    const r = await fetch(new URL('does-not-exist-xyz', location.href)); // stay within the site's base path
     return { status: r.status, body: await r.text() };
   });
   check('custom 404 page served', notFound.status === 404 && notFound.body.includes('404') && notFound.body.includes('קעקוע'), `status=${notFound.status}`);
