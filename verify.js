@@ -33,8 +33,9 @@ function check(name, ok, detail) {
   const fonts = await page.evaluate(() => ({
     suez: document.fonts.check('16px "Suez One"'),
     assistant: document.fonts.check('16px "Assistant"'),
+    metamorphous: document.fonts.check('16px "Metamorphous"'),
   }));
-  check('Suez One + Assistant loaded', fonts.suez && fonts.assistant, JSON.stringify(fonts));
+  check('Suez One + Assistant + Metamorphous (hero) loaded', fonts.suez && fonts.assistant && fonts.metamorphous, JSON.stringify(fonts));
 
   // hero: HD video playing behind canvas stencil, subtitle visible
   const hero = await page.evaluate(() => {
@@ -149,11 +150,20 @@ function check(name, ok, detail) {
   // filter
   await page.click('.gf[data-filter="color"]');
   await new Promise(r => setTimeout(r, 300));
-  const visCount = await page.evaluate(() => document.querySelectorAll('.gitem:not(.hide)').length);
-  check('gallery filter works', visCount === 1, `visible after "color" filter: ${visCount}`);
+  const filterState = await page.evaluate(() => {
+    const vis = [...document.querySelectorAll('.gitem:not(.hide)')];
+    return {
+      visible: vis.length,
+      colorTotal: document.querySelectorAll('.gitem[data-style="color"]').length,
+      allColor: vis.every(g => g.getAttribute('data-style') === 'color'),
+    };
+  });
+  check('gallery filter works',
+    filterState.colorTotal > 1 && filterState.visible === filterState.colorTotal && filterState.allColor,
+    JSON.stringify(filterState));
   await page.click('.gf[data-filter="all"]');
 
-  // styles list: floating photo card on hover + click filters gallery
+  // styles list: ink-sweep on hover (display-only, decoupled from gallery)
   await page.evaluate(() => {
     const s = document.querySelector('#styles');
     if (window.__lenis) window.__lenis.scrollTo(s, { immediate: true }); else s.scrollIntoView();
@@ -175,17 +185,17 @@ function check(name, ok, detail) {
     posBefore !== sweep.pos && sweep.pos.startsWith('100%') && sweep.clip === 'text' && sweep.siblingOpacity < 0.5,
     `pos ${posBefore} -> ${sweep.pos}, clip=${sweep.clip}, sibling=${sweep.siblingOpacity}`);
   await li.click();
-  await new Promise(r => setTimeout(r, 1200));
-  const styleFilter = await page.evaluate(() => ({
-    active: document.querySelector('.gf.active').getAttribute('data-filter'),
+  await new Promise(r => setTimeout(r, 400));
+  const stylesState = await page.evaluate(() => ({
+    count: document.querySelectorAll('.styles-list li').length,
+    activeAfterClick: document.querySelector('.gf.active').getAttribute('data-filter'),
     visible: document.querySelectorAll('.gitem:not(.hide)').length,
-    nearGallery: Math.abs(document.querySelector('#gallery').getBoundingClientRect().top) < innerHeight,
+    total: document.querySelectorAll('.gitem').length,
   }));
-  check('style click filters gallery + scrolls to it',
-    styleFilter.active === 'color' && styleFilter.visible === 1 && styleFilter.nearGallery,
-    JSON.stringify(styleFilter));
-  await page.click('.gf[data-filter="all"]');
-  await new Promise(r => setTimeout(r, 300));
+  check('styles list: all 6 categories, display-only (click does not filter gallery)',
+    stylesState.count === 6 && stylesState.activeAfterClick === 'all' && stylesState.visible === stylesState.total,
+    JSON.stringify(stylesState));
+  await new Promise(r => setTimeout(r, 200));
 
   // studio film strip pans with scroll
   async function scrollToStudioP(p) {

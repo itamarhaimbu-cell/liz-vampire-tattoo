@@ -68,7 +68,8 @@ img{max-width:100%;display:block}
   padding:1.1rem clamp(1.2rem,4vw,3rem);
   mix-blend-mode:difference;
 }
-.brand{font-family:var(--serif);font-size:1.1rem;letter-spacing:.03em;justify-self:start}
+.brand{justify-self:start;display:inline-flex;align-items:center;line-height:0}
+.brand-mark{height:44px;width:auto;display:block}
 .topbar nav{display:flex;gap:2.2rem;font-size:.95rem;font-weight:400;justify-self:center}
 .topbar nav a{opacity:.75;transition:opacity .3s}
 .topbar nav a:hover{opacity:1}
@@ -124,7 +125,7 @@ img{max-width:100%;display:block}
   will-change:opacity;
 }
 .hero-copy-mobile{display:none}
-.hero-title-m{font-size:clamp(2rem,10.5vw,3.2rem);line-height:1.25;text-shadow:0 4px 60px rgba(0,0,0,.85)}
+.hero-title-m{font-family:"Metamorphous",serif;font-size:clamp(2rem,10.5vw,3.2rem);line-height:1.25;text-shadow:0 4px 60px rgba(0,0,0,.85)}
 .hero-sub{
   position:absolute;bottom:15vh;right:50%;transform:translateX(50%);z-index:3;
   font-size:clamp(1.05rem,1.8vw,1.4rem);letter-spacing:.14em;
@@ -221,7 +222,7 @@ section{position:relative}
   background-position:0% 0;
   -webkit-background-clip:text;background-clip:text;
   transition:background-position .55s cubic-bezier(.4,0,.2,1),opacity .45s ease;
-  width:fit-content;cursor:pointer;
+  width:fit-content;cursor:default;
 }
 .styles-list li:hover{background-position:100% 0}
 .styles-list:hover li:not(:hover){opacity:.4}
@@ -231,7 +232,8 @@ section{position:relative}
 
 /* ---------- gallery ---------- */
 #gallery{border-top:1px solid var(--line)}
-.gallery-hint{color:var(--bone-dim);font-size:1.05rem;margin:-1.6rem 0 2rem}
+.gallery-note{color:var(--bone-dim);font-size:clamp(1.1rem,1.7vw,1.35rem);font-weight:300;margin:-1.6rem 0 .5rem}
+.gallery-hint{color:var(--bone-dim);font-size:1.05rem;margin:0 0 2rem;opacity:.75}
 .gallery-filters{display:flex;flex-wrap:wrap;gap:.7rem;margin-bottom:2.8rem}
 .gf{
   background:none;border:1px solid var(--line);color:var(--bone-dim);

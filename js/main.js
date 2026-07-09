@@ -179,12 +179,15 @@
     var fontsReady = false;
     var lastScale = -1, lastFade = -1;
 
-    document.fonts.load('10px "Suez One"').then(function () {
+    document.fonts.load('10px "Metamorphous"').then(function () {
       return document.fonts.ready;
     }).then(function () { fontsReady = true; lastScale = -1; });
 
     function resize() {
-      var dpr = Math.min(window.devicePixelRatio || 1, 2);
+      // Supersample the mask: the letters are punched into a raster canvas, so on
+      // a DPR=1 display (most desktop monitors at 100%) a 1:1 buffer makes the big
+      // letterforms alias badly. Render at min 2x, up to 3x on hi-DPI, for crisp edges.
+      var dpr = Math.min(Math.max(window.devicePixelRatio || 1, 2), 3);
       canvas.width = canvas.clientWidth * dpr;
       canvas.height = canvas.clientHeight * dpr;
       lastScale = -1; // force redraw
@@ -192,20 +195,31 @@
     window.addEventListener('resize', resize);
     resize();
 
+    // Metamorphous runs wider than a slab face, so size the title by measuring
+    // the actual text to fill a target width fraction (with side margins) rather
+    // than a fixed coefficient — keeps "LIZ VAMPIRE" from clipping at any width.
+    function fitSize(text, tracking, targetW, cap) {
+      var base = 200;
+      ctx.font = base + 'px "Metamorphous"';
+      try { ctx.letterSpacing = (base * tracking) + 'px'; } catch (e) {}
+      var measured = ctx.measureText(text).width;
+      try { ctx.letterSpacing = '0px'; } catch (e) {}
+      return Math.min(base * targetW / measured, cap);
+    }
     // stencil layout per orientation: [text, fontSize, baselineY, tracking]
     function stencilLines(w, h) {
       if (h > w) { // portrait: three stacked lines
-        var big = Math.min(w * 0.21, h * 0.17);
+        var big = fitSize('VAMPIRE', 0, w * 0.9, h * 0.17);
         return [
           ['LIZ', big, 0.35, 0],
           ['VAMPIRE', big, 0.48, 0],
-          ['TATTOO', big * 0.55, 0.585, 0.25]
+          ['TATTOO', fitSize('TATTOO', 0.25, w * 0.72, big * 0.58), 0.585, 0.25]
         ];
       }
-      var bigL = Math.min(w * 0.155, h * 0.42);
+      var bigL = fitSize('LIZ VAMPIRE', 0, w * 0.88, h * 0.46);
       return [
         ['LIZ VAMPIRE', bigL, 0.44, 0],
-        ['TATTOO', bigL * 0.6, 0.66, 0.3]
+        ['TATTOO', fitSize('TATTOO', 0.3, w * 0.6, bigL * 0.6), 0.66, 0.3]
       ];
     }
     function zoomOrigin(w, h) {
@@ -230,7 +244,7 @@
       // punch the letters out of the black overlay
       ctx.globalCompositeOperation = 'destination-out';
       lines.forEach(function (l) {
-        ctx.font = l[1] + 'px "Suez One"';
+        ctx.font = l[1] + 'px "Metamorphous"';
         try { ctx.letterSpacing = (l[1] * l[3]) + 'px'; } catch (e) {}
         ctx.fillText(l[0], w / 2, h * l[2]);
       });
@@ -239,7 +253,7 @@
       ctx.strokeStyle = 'rgba(236,231,221,0.35)';
       ctx.lineWidth = Math.max(1, 1.2 / scale);
       lines.forEach(function (l) {
-        ctx.font = l[1] + 'px "Suez One"';
+        ctx.font = l[1] + 'px "Metamorphous"';
         try { ctx.letterSpacing = (l[1] * l[3]) + 'px'; } catch (e) {}
         ctx.strokeText(l[0], w / 2, h * l[2]);
       });
@@ -366,21 +380,7 @@
     });
   });
 
-  /* ---------- styles list: click filters the gallery (hover = CSS ink sweep) ---------- */
-  document.querySelectorAll('.styles-list li').forEach(function (li) {
-    li.addEventListener('click', function () {
-      var style = li.getAttribute('data-style');
-      filterBtns.forEach(function (b) {
-        b.classList.toggle('active', b.getAttribute('data-filter') === style);
-      });
-      items.forEach(function (it) {
-        it.classList.toggle('hide', it.getAttribute('data-style') !== style);
-      });
-      track('style_click', { style: style });
-      var g = document.getElementById('gallery');
-      if (lenis) lenis.scrollTo(g, { offset: 0 }); else g.scrollIntoView({ behavior: 'smooth' });
-    });
-  });
+  /* ---------- styles list: display-only showcase (hover = CSS ink sweep) ---------- */
 
   /* ---------- lightbox with navigation ---------- */
   var lb = document.getElementById('lightbox');

@@ -46,10 +46,10 @@
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Suez+One&family=Assistant:wght@200;300;400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Suez+One&family=Metamorphous&family=Assistant:wght@200;300;400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/lenis.css">
 <link rel="stylesheet" href="css/main.css">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23060606'/%3E%3Ctext x='16' y='23' font-size='17' font-weight='bold' fill='%23ece7dd' text-anchor='middle' font-family='Georgia,serif'%3ELV%3C/text%3E%3C/svg%3E">
+<link rel="icon" type="image/png" href="assets/img/favicon.png">
 </head>
 <body>
 
@@ -60,7 +60,7 @@
 <div id="loader" aria-hidden="true"><span class="loader-mark">ליז ואמפייר</span></div>
 
 <header class="topbar">
-  <a class="brand" href="#hero">ליז ואמפייר טאטו</a>
+  <a class="brand" href="#hero"><img class="brand-mark" src="assets/img/logo.png" alt="ליז ואמפייר טאטו"></a>
   <nav>
     <a href="#story">הסיפור</a>
     <a href="#artists">האמנים</a>
@@ -178,25 +178,55 @@
 <section id="gallery">
   <div class="section-inner">
     <p class="kicker reveal">העבודות</p>
+    <p class="gallery-note reveal">מבחר קטן מתוך אלפי קעקועים שנעשו כאן לאורך השנים.</p>
     <p class="gallery-hint reveal">עברו עם העכבר — הצבע חוזר לרגע.</p>
     <div class="gallery-filters reveal" role="tablist">
       <button class="gf active" data-filter="all">הכל</button>
       <button class="gf" data-filter="realism">ריאליזם</button>
-      <button class="gf" data-filter="bw">שחור־לבן</button>
+      <button class="gf" data-filter="myth">מיתולוגיה</button>
       <button class="gf" data-filter="color">צבע</button>
-      <button class="gf" data-filter="traditional">טרדישיונל</button>
-      <button class="gf" data-filter="geometric">גיאומטרי</button>
-      <button class="gf" data-filter="lettering">לטרינג</button>
     </div>
     <div class="gallery-grid">
-      <figure class="gitem reveal" data-style="realism"><img src="assets/img/g1.jpg" alt="קעקוע ריאליזם — אריה" loading="lazy"><figcaption>ריאליזם</figcaption></figure>
-      <figure class="gitem reveal" data-style="realism"><img src="assets/img/g2.jpg" alt="קעקוע ריאליזם — פורטרט" loading="lazy"><figcaption>ריאליזם</figcaption></figure>
-      <figure class="gitem reveal" data-style="bw"><img src="assets/img/g3.jpg" alt="קעקוע שחור-לבן — עורב" loading="lazy"><figcaption>שחור־לבן</figcaption></figure>
-      <figure class="gitem reveal" data-style="color"><img src="assets/img/g4.jpg" alt="קעקוע צבע — דג קוי" loading="lazy"><figcaption>צבע</figcaption></figure>
-      <figure class="gitem reveal" data-style="traditional"><img src="assets/img/g5.jpg" alt="קעקוע טרדישיונל — ורד ופגיון" loading="lazy"><figcaption>טרדישיונל</figcaption></figure>
-      <figure class="gitem reveal" data-style="geometric"><img src="assets/img/g6.jpg" alt="קעקוע גיאומטרי — מנדלה" loading="lazy"><figcaption>גיאומטרי</figcaption></figure>
-      <figure class="gitem reveal" data-style="lettering"><img src="assets/img/g7.jpg" alt="קעקוע לטרינג — קליגרפיה" loading="lazy"><figcaption>לטרינג</figcaption></figure>
-      <figure class="gitem reveal" data-style="bw"><img src="assets/img/g8.jpg" alt="קעקוע שחור-לבן — עין" loading="lazy"><figcaption>שחור־לבן</figcaption></figure>
+      <figure class="gitem reveal" data-style="realism"><img src="assets/img/work/w01.jpg" alt="קעקוע — לוחם סמוראי" loading="lazy"><figcaption>לוחם סמוראי</figcaption></figure>
+      <figure class="gitem reveal" data-style="myth"><img src="assets/img/work/w02.jpg" alt="קעקוע — דוד" loading="lazy"><figcaption>דוד</figcaption></figure>
+      <figure class="gitem reveal" data-style="myth"><img src="assets/img/work/w03.jpg" alt="קעקוע — אלת הצייד" loading="lazy"><figcaption>אלת הצייד</figcaption></figure>
+      <figure class="gitem reveal" data-style="realism"><img src="assets/img/work/w04.jpg" alt="קעקוע — הג׳וקר" loading="lazy"><figcaption>הג׳וקר</figcaption></figure>
+      <figure class="gitem reveal" data-style="realism"><img src="assets/img/work/w05.jpg" alt="קעקוע — פיקי בליינדרס" loading="lazy"><figcaption>פיקי בליינדרס</figcaption></figure>
+      <figure class="gitem reveal" data-style="realism"><img src="assets/img/work/w06.jpg" alt="קעקוע — אריה ושעון" loading="lazy"><figcaption>אריה ושעון</figcaption></figure>
+      <figure class="gitem reveal" data-style="myth"><img src="assets/img/work/w07.jpg" alt="קעקוע — דוד — הבזק אדום" loading="lazy"><figcaption>דוד — הבזק אדום</figcaption></figure>
+      <figure class="gitem reveal" data-style="realism"><img src="assets/img/work/w08.jpg" alt="קעקוע — סצנת רחוב" loading="lazy"><figcaption>סצנת רחוב</figcaption></figure>
+      <figure class="gitem reveal" data-style="realism"><img src="assets/img/work/w09.jpg" alt="קעקוע — פורטרט סליב" loading="lazy"><figcaption>פורטרט סליב</figcaption></figure>
+      <figure class="gitem reveal" data-style="realism"><img src="assets/img/work/w10.jpg" alt="קעקוע — דיוקן סוריאליסטי" loading="lazy"><figcaption>דיוקן סוריאליסטי</figcaption></figure>
+      <figure class="gitem reveal" data-style="color"><img src="assets/img/work/w11.jpg" alt="קעקוע — ג׳סיקה רביט" loading="lazy"><figcaption>ג׳סיקה רביט</figcaption></figure>
+      <figure class="gitem reveal" data-style="color"><img src="assets/img/work/w12.jpg" alt="קעקוע — דדפול" loading="lazy"><figcaption>דדפול</figcaption></figure>
+      <figure class="gitem reveal" data-style="myth"><img src="assets/img/work/w13.jpg" alt="קעקוע — העולם כולו שלך" loading="lazy"><figcaption>העולם כולו שלך</figcaption></figure>
+      <figure class="gitem reveal" data-style="myth"><img src="assets/img/work/w14.jpg" alt="קעקוע — זאוס" loading="lazy"><figcaption>זאוס</figcaption></figure>
+      <figure class="gitem reveal" data-style="color"><img src="assets/img/work/w15.jpg" alt="קעקוע — אדון מונופול" loading="lazy"><figcaption>אדון מונופול</figcaption></figure>
+      <figure class="gitem reveal" data-style="myth"><img src="assets/img/work/w16.jpg" alt="קעקוע — לוחם ספרטני" loading="lazy"><figcaption>לוחם ספרטני</figcaption></figure>
+      <figure class="gitem reveal" data-style="color"><img src="assets/img/work/w17.jpg" alt="קעקוע — איינשטיין" loading="lazy"><figcaption>איינשטיין</figcaption></figure>
+      <figure class="gitem reveal" data-style="realism"><img src="assets/img/work/w18.jpg" alt="קעקוע — ראש סוס" loading="lazy"><figcaption>ראש סוס</figcaption></figure>
+      <figure class="gitem reveal" data-style="realism"><img src="assets/img/work/w19.jpg" alt="קעקוע — מדרגות אינסופיות" loading="lazy"><figcaption>מדרגות אינסופיות</figcaption></figure>
+      <figure class="gitem reveal" data-style="myth"><img src="assets/img/work/w20.jpg" alt="קעקוע — אל הסער" loading="lazy"><figcaption>אל הסער</figcaption></figure>
+      <figure class="gitem reveal" data-style="myth"><img src="assets/img/work/w21.jpg" alt="קעקוע — פסל האלה" loading="lazy"><figcaption>פסל האלה</figcaption></figure>
+      <figure class="gitem reveal" data-style="realism"><img src="assets/img/work/w22.jpg" alt="קעקוע — ג׳ק ספארו" loading="lazy"><figcaption>ג׳ק ספארו</figcaption></figure>
+      <figure class="gitem reveal" data-style="realism"><img src="assets/img/work/w23.jpg" alt="קעקוע — יצור מהחלל" loading="lazy"><figcaption>יצור מהחלל</figcaption></figure>
+      <figure class="gitem reveal" data-style="myth"><img src="assets/img/work/w24.jpg" alt="קעקוע — דוד וציפורים" loading="lazy"><figcaption>דוד וציפורים</figcaption></figure>
+      <figure class="gitem reveal" data-style="realism"><img src="assets/img/work/w25.jpg" alt="קעקוע — הארנב הלבן" loading="lazy"><figcaption>הארנב הלבן</figcaption></figure>
+      <figure class="gitem reveal" data-style="myth"><img src="assets/img/work/w26.jpg" alt="קעקוע — מלאך" loading="lazy"><figcaption>מלאך</figcaption></figure>
+      <figure class="gitem reveal" data-style="realism"><img src="assets/img/work/w27.jpg" alt="קעקוע — האסטרונאוט" loading="lazy"><figcaption>האסטרונאוט</figcaption></figure>
+      <figure class="gitem reveal" data-style="color"><img src="assets/img/work/w28.jpg" alt="קעקוע — סקרוג׳" loading="lazy"><figcaption>סקרוג׳</figcaption></figure>
+      <figure class="gitem reveal" data-style="myth"><img src="assets/img/work/w29.jpg" alt="קעקוע — סליב ספרטני" loading="lazy"><figcaption>סליב ספרטני</figcaption></figure>
+      <figure class="gitem reveal" data-style="realism"><img src="assets/img/work/w30.jpg" alt="קעקוע — סלבדור דאלי" loading="lazy"><figcaption>סלבדור דאלי</figcaption></figure>
+      <figure class="gitem reveal" data-style="myth"><img src="assets/img/work/w31.jpg" alt="קעקוע — פוסידון" loading="lazy"><figcaption>פוסידון</figcaption></figure>
+      <figure class="gitem reveal" data-style="color"><img src="assets/img/work/w32.jpg" alt="קעקוע — דדפול מיני" loading="lazy"><figcaption>דדפול מיני</figcaption></figure>
+      <figure class="gitem reveal" data-style="realism"><img src="assets/img/work/w33.jpg" alt="קעקוע — Relax" loading="lazy"><figcaption>Relax</figcaption></figure>
+      <figure class="gitem reveal" data-style="myth"><img src="assets/img/work/w34.jpg" alt="קעקוע — אל האולימפוס" loading="lazy"><figcaption>אל האולימפוס</figcaption></figure>
+      <figure class="gitem reveal" data-style="realism"><img src="assets/img/work/w35.jpg" alt="קעקוע — Trust No One" loading="lazy"><figcaption>Trust No One</figcaption></figure>
+      <figure class="gitem reveal" data-style="color"><img src="assets/img/work/w36.jpg" alt="קעקוע — נערת הסוכריה" loading="lazy"><figcaption>נערת הסוכריה</figcaption></figure>
+      <figure class="gitem reveal" data-style="color"><img src="assets/img/work/w37.jpg" alt="קעקוע — נמר וקוי" loading="lazy"><figcaption>נמר וקוי</figcaption></figure>
+      <figure class="gitem reveal" data-style="realism"><img src="assets/img/work/w38.jpg" alt="קעקוע — חתול ניו־סקול" loading="lazy"><figcaption>חתול ניו־סקול</figcaption></figure>
+      <figure class="gitem reveal" data-style="realism"><img src="assets/img/work/w39.jpg" alt="קעקוע — כלי נשיפה" loading="lazy"><figcaption>כלי נשיפה</figcaption></figure>
+      <figure class="gitem reveal" data-style="myth"><img src="assets/img/work/w40.jpg" alt="קעקוע — פוסידון והסערה" loading="lazy"><figcaption>פוסידון והסערה</figcaption></figure>
     </div>
   </div>
 </section>
@@ -207,7 +237,7 @@
     <div class="strip-track">
       <div class="strip-lead">
         <p class="kicker">הסטודיו</p>
-        <h2 class="display">חדר אחד.<br>שחור, לבן, ונקי.</h2>
+        <h2 class="display">שחור, לבן, ונקי.</h2>
         <p class="strip-lede">בלי פילטרים. ככה זה נראה באמת.</p>
       </div>
       <figure class="sframe"><img src="assets/img/studio/s1.jpg" alt="כיסא הקעקועים תחת הסופטבוקס" loading="lazy"><figcaption>01 · הכיסא</figcaption></figure>
