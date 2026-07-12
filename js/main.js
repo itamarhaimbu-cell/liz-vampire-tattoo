@@ -475,14 +475,15 @@
     window.open(url, '_blank', 'noopener');
   });
 
-  // mobile bar WhatsApp — short generic message
-  var mbWa = document.getElementById('mbWa');
-  mbWa.addEventListener('click', function (e) {
-    e.preventDefault();
-    var url = waUrl('היי, אשמח לקבוע תור לקעקוע 🙂');
-    window.__lastWaUrl = url;
-    track('wa_quick');
-    window.open(url, '_blank', 'noopener');
+  // any [data-wa] element (nav/menu CTA, booking + contact links, mobile bar) → WhatsApp
+  document.querySelectorAll('[data-wa]').forEach(function (el) {
+    el.addEventListener('click', function (e) {
+      e.preventDefault();
+      var url = waUrl('היי, אשמח לקבוע תור לקעקוע 🙂');
+      window.__lastWaUrl = url;
+      track('wa_quick');
+      window.open(url, '_blank', 'noopener');
+    });
   });
 
   /* ---------- conversion event hooks ---------- */

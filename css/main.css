@@ -345,7 +345,10 @@ section{position:relative}
 /* ---------- booking ---------- */
 #booking{border-top:1px solid var(--line)}
 .booking-inner{max-width:760px}
-.booking-inner h2{font-size:clamp(2.2rem,5.5vw,3.9rem);margin-bottom:3rem}
+.booking-inner h2{font-size:clamp(2.2rem,5.5vw,3.9rem);margin-bottom:1.4rem}
+.booking-intro{color:var(--bone-dim);font-size:clamp(1.05rem,1.7vw,1.3rem);line-height:1.85;margin-bottom:1.8rem}
+.quick-contact{display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:2.6rem}
+.form-lead{color:var(--bone-dim);font-size:1rem;letter-spacing:.04em;margin-bottom:1.6rem}
 #waForm label{
   display:flex;flex-direction:column;gap:.5rem;
   font-size:.95rem;letter-spacing:.1em;color:var(--bone-dim);font-weight:400;
@@ -364,6 +367,12 @@ section{position:relative}
 #waForm input.err{border-bottom-color:#fff;box-shadow:0 1px 0 #fff}
 .form-actions{display:flex;gap:1rem;flex-wrap:wrap;margin-top:1.6rem;align-items:center}
 .form-err{margin-top:1rem;font-size:1rem;color:var(--bone);letter-spacing:.03em}
+
+/* ---------- piercing (statement) ---------- */
+#piercing{border-top:1px solid var(--line)}
+.piercing-inner{text-align:center}
+.piercing-inner h2{font-size:clamp(3rem,8.5vw,6.6rem)}
+.piercing-inner p{margin:2rem 0 2.8rem;color:var(--bone-dim);font-size:clamp(1.1rem,1.8vw,1.4rem);line-height:1.9}
 
 /* ---------- academy (the one inversion) ---------- */
 #academy.inverted{background:var(--bone);color:var(--black)}

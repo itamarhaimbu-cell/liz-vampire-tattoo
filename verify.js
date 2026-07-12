@@ -275,6 +275,35 @@ function check(name, ok, detail) {
     `popup=${popupCreated ? 'opened' : 'NONE'} popupUrl=${popupUrl} form-url-ok=${decoded.includes('דנה לוי') && decoded.includes('0501234567')}`);
   for (const p of await browser.pages()) { if (p !== page && p.url().includes('whatsapp')) await p.close().catch(() => {}); }
 
+  // nav CTA now opens WhatsApp directly (less friction than scrolling to the form)
+  await page.evaluate(() => { window.__lastWaUrl = null; });
+  let navPopup = false;
+  browser.once('targetcreated', () => { navPopup = true; });
+  await page.click('.nav-cta[data-wa]');
+  await new Promise(r => setTimeout(r, 1500));
+  const navWa = await page.evaluate(() => window.__lastWaUrl);
+  check('nav CTA opens WhatsApp directly', !!navWa && navWa.indexOf('wa.me/97239503487') !== -1 && navPopup, `navWa=${navWa} popup=${navPopup}`);
+  for (const p of await browser.pages()) { if (p !== page && p.url().includes('whatsapp')) await p.close().catch(() => {}); }
+
+  // booking: three-way prompt — call + WhatsApp quick-contact sit above the form
+  const bookingUi = await page.evaluate(() => {
+    const b = document.querySelector('#booking');
+    return {
+      intro: !!b.querySelector('.booking-intro'),
+      tel: !!b.querySelector('.quick-contact a[href^="tel:"]'),
+      wa: !!b.querySelector('.quick-contact a[data-wa]'),
+    };
+  });
+  check('booking: call + WhatsApp quick-contact above the form', bookingUi.intro && bookingUi.tel && bookingUi.wa, JSON.stringify(bookingUi));
+
+  // piercing section present with a WhatsApp CTA
+  const piercing = await page.evaluate(() => {
+    const s = document.querySelector('#piercing');
+    if (!s) return null;
+    return { cta: !!s.querySelector('[data-wa]'), text: s.textContent.includes('פירסינג') };
+  });
+  check('piercing section present with WhatsApp CTA', !!piercing && piercing.cta && piercing.text, JSON.stringify(piercing));
+
   // social proof strip
   const proof = await page.evaluate(() => {
     const s = document.querySelector('#proof');
