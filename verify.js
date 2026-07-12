@@ -249,60 +249,26 @@ function check(name, ok, detail) {
   });
   check('nav links centered', Math.abs(nav.navCenter - nav.viewCenter) < 8, JSON.stringify(nav));
 
-  // WhatsApp handoff
-  await page.evaluate(() => {
-    const b = document.querySelector('#booking');
-    if (window.__lenis) window.__lenis.scrollTo(b, { immediate: true }); else b.scrollIntoView();
-  });
-  await new Promise(r => setTimeout(r, 700));
-  await page.type('#waForm [name=name]', 'דנה לוי');
-  await page.type('#waForm [name=phone]', '0501234567');
-  await page.select('#waForm [name=style]', 'ריאליזם');
-  await page.type('#waForm [name=placement]', 'זרוע');
-  await page.type('#waForm [name=idea]', 'אריה ריאליסטי');
-  await page.screenshot({ path: SHOT('07-booking-filled.png') });
-  let popupCreated = false;
-  browser.once('targetcreated', () => { popupCreated = true; });
-  await page.click('#waForm button[type=submit]');
-  await new Promise(r => setTimeout(r, 3000));
-  const popupUrl = browser.targets().map(t => t.url()).find(u => u.includes('wa.me') || u.includes('whatsapp.com')) || null;
-  const waUrl = await page.evaluate(() => window.__lastWaUrl);
-  const decoded = waUrl ? decodeURIComponent(waUrl) : '';
-  check('WhatsApp handoff builds correct URL',
-    !!waUrl && waUrl.startsWith('https://wa.me/97239503487?text=') &&
-    decoded.includes('דנה לוי') && decoded.includes('0501234567') && decoded.includes('ריאליזם') &&
-    popupCreated && !!popupUrl,
-    `popup=${popupCreated ? 'opened' : 'NONE'} popupUrl=${popupUrl} form-url-ok=${decoded.includes('דנה לוי') && decoded.includes('0501234567')}`);
-  for (const p of await browser.pages()) { if (p !== page && p.url().includes('whatsapp')) await p.close().catch(() => {}); }
+  // call-only: nav CTA is a phone-call link, no WhatsApp anywhere
+  const callState = await page.evaluate(() => ({
+    navCta: (document.querySelector('.nav-cta') || {}).getAttribute ? document.querySelector('.nav-cta').getAttribute('href') : null,
+    menuCta: document.querySelector('.menu-cta') ? document.querySelector('.menu-cta').getAttribute('href') : null,
+    anyWa: !!document.querySelector('[data-wa], a[href*="wa.me"], a[href*="whatsapp"]'),
+  }));
+  check('nav + menu CTA are call links (no WhatsApp on page)',
+    callState.navCta === 'tel:039503487' && callState.menuCta === 'tel:039503487' && !callState.anyWa,
+    JSON.stringify(callState));
 
-  // nav CTA now opens WhatsApp directly (less friction than scrolling to the form)
-  await page.evaluate(() => { window.__lastWaUrl = null; });
-  let navPopup = false;
-  browser.once('targetcreated', () => { navPopup = true; });
-  await page.click('.nav-cta[data-wa]');
-  await new Promise(r => setTimeout(r, 1500));
-  const navWa = await page.evaluate(() => window.__lastWaUrl);
-  check('nav CTA opens WhatsApp directly', !!navWa && navWa.indexOf('wa.me/97239503487') !== -1 && navPopup, `navWa=${navWa} popup=${navPopup}`);
-  for (const p of await browser.pages()) { if (p !== page && p.url().includes('whatsapp')) await p.close().catch(() => {}); }
-
-  // booking: three-way prompt — call + WhatsApp quick-contact sit above the form
+  // booking is a call CTA (form removed)
   const bookingUi = await page.evaluate(() => {
     const b = document.querySelector('#booking');
     return {
       intro: !!b.querySelector('.booking-intro'),
-      tel: !!b.querySelector('.quick-contact a[href^="tel:"]'),
-      wa: !!b.querySelector('.quick-contact a[data-wa]'),
+      callBtn: (b.querySelector('a.btn[href^="tel:"]') || {}).getAttribute ? b.querySelector('a.btn[href^="tel:"]').getAttribute('href') : null,
+      noForm: !b.querySelector('#waForm'),
     };
   });
-  check('booking: call + WhatsApp quick-contact above the form', bookingUi.intro && bookingUi.tel && bookingUi.wa, JSON.stringify(bookingUi));
-
-  // piercing section present with a WhatsApp CTA
-  const piercing = await page.evaluate(() => {
-    const s = document.querySelector('#piercing');
-    if (!s) return null;
-    return { cta: !!s.querySelector('[data-wa]'), text: s.textContent.includes('פירסינג') };
-  });
-  check('piercing section present with WhatsApp CTA', !!piercing && piercing.cta && piercing.text, JSON.stringify(piercing));
+  check('booking is a call CTA (form removed)', bookingUi.intro && bookingUi.callBtn === 'tel:039503487' && bookingUi.noForm, JSON.stringify(bookingUi));
 
   // social proof strip
   const proof = await page.evaluate(() => {
@@ -341,9 +307,14 @@ function check(name, ok, detail) {
   const faqOpen = await page.evaluate(() => document.querySelector('#faq details').open);
   check('FAQ: 5 items, accordion opens', faqCount === 5 && faqOpen, `items=${faqCount} open=${faqOpen}`);
 
-  // conversion tracking recorded the earlier WhatsApp submit
+  // conversion tracking: clicking the consult "book" link records book_cta
+  await page.evaluate(() => {
+    const a = document.querySelector('#consult a[href="#booking"]');
+    if (a) a.click();
+  });
+  await new Promise(r => setTimeout(r, 200));
   const events = await page.evaluate(() => (window.__events || []).map(e => e.name));
-  check('conversion tracking records events', events.includes('wa_form_submit'), JSON.stringify(events));
+  check('conversion tracking records events', events.includes('book_cta'), JSON.stringify(events));
 
   // academy strip
   const academy = await page.evaluate(() => {

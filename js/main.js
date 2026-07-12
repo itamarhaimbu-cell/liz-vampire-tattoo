@@ -2,7 +2,6 @@
 (function () {
   'use strict';
 
-  var WA_NUMBER = '97239503487'; // studio WhatsApp — swap here if the business uses a mobile line
   var GA_ID = ''; // paste the GA4 Measurement ID ('G-XXXXXXXXXX') to enable Google Analytics
   var isSmall = window.matchMedia('(max-width:820px)').matches;        // layout choices only
   var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches; // disables all scroll 3D
@@ -443,50 +442,7 @@
     if (Math.abs(dx) > 50) lbShow(lbIndex + (dx > 0 ? 1 : -1)); // swipe follows finger, RTL-friendly
   }, { passive: true });
 
-  /* ---------- WhatsApp booking form ---------- */
-  function waUrl(msg) {
-    return 'https://wa.me/' + WA_NUMBER + '?text=' + encodeURIComponent(msg);
-  }
-  var form = document.getElementById('waForm');
-  form.addEventListener('submit', function (e) {
-    e.preventDefault();
-    var f = new FormData(form);
-    var name = (f.get('name') || '').toString().trim();
-    var phone = (f.get('phone') || '').toString().trim();
-    var err = document.getElementById('formErr');
-    form.querySelectorAll('input').forEach(function (i) { i.classList.remove('err'); });
-    if (!name || !phone) {
-      err.hidden = false;
-      if (!name) form.querySelector('[name=name]').classList.add('err');
-      if (!phone) form.querySelector('[name=phone]').classList.add('err');
-      return;
-    }
-    err.hidden = true;
-    var msg = 'היי, אשמח לקבוע תור לקעקוע.\n' +
-      'שם: ' + name + '\n' +
-      'טלפון: ' + phone + '\n' +
-      'סגנון: ' + f.get('style') + '\n' +
-      'גודל: ' + f.get('size') + '\n' +
-      'מיקום בגוף: ' + (f.get('placement') || '-') + '\n' +
-      'הרעיון: ' + (f.get('idea') || '-');
-    var url = waUrl(msg);
-    window.__lastWaUrl = url;
-    track('wa_form_submit', { style: (f.get('style') || '').toString() });
-    window.open(url, '_blank', 'noopener');
-  });
-
-  // any [data-wa] element (nav/menu CTA, booking + contact links, mobile bar) → WhatsApp
-  document.querySelectorAll('[data-wa]').forEach(function (el) {
-    el.addEventListener('click', function (e) {
-      e.preventDefault();
-      var url = waUrl('היי, אשמח לקבוע תור לקעקוע 🙂');
-      window.__lastWaUrl = url;
-      track('wa_quick');
-      window.open(url, '_blank', 'noopener');
-    });
-  });
-
-  /* ---------- conversion event hooks ---------- */
+  /* ---------- conversion event hooks (call-only) ---------- */
   document.querySelectorAll('a[href^="tel:"]').forEach(function (a) {
     a.addEventListener('click', function () { track('call_click'); });
   });
