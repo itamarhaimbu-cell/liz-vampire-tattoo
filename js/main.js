@@ -2,7 +2,15 @@
 (function () {
   'use strict';
 
-  var GA_ID = ''; // paste the GA4 Measurement ID ('G-XXXXXXXXXX') to enable Google Analytics
+  /* ---------- analytics + Google Ads conversion IDs ---------- */
+  var GA_ID = 'G-M32DX04HDN'; // GA4 Measurement ID
+  var AW_ID = 'AW-1026996752'; // Google Ads conversion ID
+  // maps a site event -> the Google Ads conversion Label to fire.
+  // call_click is the primary conversion; add more as you create conversion actions.
+  var AW_CONVERSIONS = {
+    call_click: 'AfFoCP3Axs8cEJD02ukD', // "Click to call" conversion
+    book_cta:  ''                      // optional second action, leave '' to skip
+  };
   var isSmall = window.matchMedia('(max-width:820px)').matches;        // layout choices only
   var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches; // disables all scroll 3D
 
@@ -10,17 +18,22 @@
   window.__events = [];
   function track(name, params) {
     window.__events.push({ name: name, params: params || {} });
-    if (window.gtag) window.gtag('event', name, params || {});
+    if (window.gtag) {
+      window.gtag('event', name, params || {}); // GA4 event
+      var label = AW_CONVERSIONS[name];
+      if (AW_ID && label) window.gtag('event', 'conversion', { send_to: AW_ID + '/' + label }); // Google Ads conversion
+    }
   }
-  if (GA_ID) {
+  if (GA_ID || AW_ID) {
     var gs = document.createElement('script');
     gs.async = true;
-    gs.src = 'https://www.googletagmanager.com/gtag/js?id=' + GA_ID;
+    gs.src = 'https://www.googletagmanager.com/gtag/js?id=' + (GA_ID || AW_ID);
     document.head.appendChild(gs);
     window.dataLayer = window.dataLayer || [];
     window.gtag = function () { window.dataLayer.push(arguments); };
     window.gtag('js', new Date());
-    window.gtag('config', GA_ID);
+    if (GA_ID) window.gtag('config', GA_ID); // Google Analytics 4
+    if (AW_ID) window.gtag('config', AW_ID); // Google Ads
   }
 
   /* ---------- Lenis smooth scroll (desktop only; touch scroll is native) ---------- */
