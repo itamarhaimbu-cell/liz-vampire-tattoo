@@ -228,10 +228,17 @@
           ['TATTOO', fitSize('TATTOO', 0.25, w * 0.72, big * 0.58), 0.585, 0.25]
         ];
       }
-      var bigL = fitSize('LIZ VAMPIRE', 0, w * 0.88, h * 0.46);
+      // landscape: two lines. The title is measured to fill a fraction of the
+      // width — but on wide/short laptops (aspect ≫ 16:9) filling 88% makes the
+      // letters grow too tall and crowd the navbar. Ease the width fraction down
+      // as the viewport gets wider-and-shorter so the title keeps clear margins
+      // top and bottom on every aspect ratio. Tall desktops stay at ~0.88.
+      var aspect = w / h;
+      var wfrac = 0.88 - clamp01((aspect - 1.75) / 0.9) * 0.20; // 16:9→~.88, 2.1:1→~.80
+      var bigL = fitSize('LIZ VAMPIRE', 0, w * wfrac, h * 0.42);
       return [
-        ['LIZ VAMPIRE', bigL, 0.44, 0],
-        ['TATTOO', fitSize('TATTOO', 0.3, w * 0.6, bigL * 0.6), 0.66, 0.3]
+        ['LIZ VAMPIRE', bigL, 0.45, 0],
+        ['TATTOO', fitSize('TATTOO', 0.3, w * wfrac * 0.68, bigL * 0.6), 0.665, 0.3]
       ];
     }
     function zoomOrigin(w, h) {

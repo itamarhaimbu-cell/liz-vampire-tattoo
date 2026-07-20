@@ -56,8 +56,9 @@ img{max-width:100%;display:block}
 }
 #loader.done{opacity:0;pointer-events:none}
 .loader-mark{
-  font-family:var(--serif);font-size:clamp(1.4rem,3vw,2.2rem);
-  color:var(--bone);opacity:0;animation:pulse 1.6s ease infinite alternate;
+  font-family:"Metamorphous",var(--serif);font-size:clamp(1.4rem,3vw,2.2rem);
+  letter-spacing:.06em;color:var(--bone);opacity:0;
+  animation:pulse 1.6s ease infinite alternate;
 }
 @keyframes pulse{from{opacity:.25}to{opacity:.9}}
 
@@ -377,6 +378,7 @@ footer{
   padding:2.4rem 1.5rem 3rem;text-align:center;
   font-size:.95rem;letter-spacing:.12em;color:var(--gray);
 }
+.foot-mark{font-family:"Metamorphous",var(--serif);letter-spacing:.05em;color:var(--bone-dim)}
 
 /* ---------- lightbox ---------- */
 #lightbox{
@@ -462,6 +464,10 @@ footer{
   .strip-lead{width:82vw;scroll-snap-align:center}
   .sframe{width:78vw;scroll-snap-align:center}
   .artists-grid{grid-template-columns:1fr}
+  /* single narrow column: shrink the year watermark and tuck it into the corner
+     so it stops colliding with the ליז / רותם heading beside it */
+  .artist-num{font-size:clamp(3.2rem,15vw,4.6rem);top:-.3rem;left:.2rem}
+  .artist h3,.artist-role,.artist-bio,.artist-ig{position:relative;z-index:1}
   .gallery-grid{grid-template-columns:repeat(2,1fr);gap:.7rem}
   .gallery-filters{gap:.5rem}
   .gf{font-size:.9rem;padding:.45rem 1.1rem}
