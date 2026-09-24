@@ -4,11 +4,11 @@
 
   /* ---------- analytics + Google Ads conversion IDs ---------- */
   var GA_ID = 'G-M32DX04HDN'; // GA4 Measurement ID
-  var AW_ID = 'AW-1026996752'; // Google Ads conversion ID
+  var AW_ID = 'AW-18472197461'; // Google Ads conversion ID (new account 257-714-8713)
   // maps a site event -> the Google Ads conversion Label to fire.
   // call_click is the primary conversion; add more as you create conversion actions.
   var AW_CONVERSIONS = {
-    call_click: 'AfFoCP3Axs8cEJD02ukD', // "Click to call" conversion
+    call_click: 'JLzeCKmD4IMdENW6nehE', // "Website call click" conversion
     book_cta:  ''                      // optional second action, leave '' to skip
   };
   var isSmall = window.matchMedia('(max-width:820px)').matches;        // layout choices only
