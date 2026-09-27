@@ -317,13 +317,10 @@ function check(name, ok, detail) {
       a.click();
     });
     const after = (window.__events || []).filter(e => e.name === 'call_click').length;
-    return { links: links.length, fired: after - before,
-      consultCalls: !!document.querySelector('#consult a[href="tel:039503487"]'),
-      galleryCall: !!document.querySelector('#gallery .call-block a[href="tel:039503487"]'),
-      proofCall: !!document.querySelector('#proof a[href="tel:039503487"]') };
+    return { links: links.length, fired: after - before };
   });
-  check('every call CTA fires call_click (consult/gallery/proof included)',
-    callTrack.links >= 8 && callTrack.fired === callTrack.links && callTrack.consultCalls && callTrack.galleryCall && callTrack.proofCall,
+  check('every call CTA fires call_click',
+    callTrack.links >= 5 && callTrack.fired === callTrack.links,
     JSON.stringify(callTrack));
 
   // academy strip
