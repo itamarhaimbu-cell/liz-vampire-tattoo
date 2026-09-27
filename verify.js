@@ -283,22 +283,46 @@ function check(name, ok, detail) {
     proof.text.includes('4.6') && proof.text.includes('244') && proof.stars && proof.link.includes('google.com/maps'),
     proof.link);
 
-  // SEO metadata
+  // SEO metadata: title/description keywords, canonical, social preview, business info for Google
   const seo = await page.evaluate(() => {
-    const og = document.querySelector('meta[property="og:image"]');
+    const m = (sel) => { const e = document.querySelector(sel); return e ? (e.content || e.getAttribute('href')) : null; };
     let ld = null;
     try { ld = JSON.parse(document.querySelector('script[type="application/ld+json"]').textContent); } catch (e) {}
     return {
-      ogImage: og ? og.content : null,
-      ldType: ld && ld['@type'],
-      reviewCount: ld && ld.aggregateRating && ld.aggregateRating.reviewCount,
+      title: document.title,
+      desc: m('meta[name="description"]'),
+      canonical: m('link[rel="canonical"]'),
+      ogUrl: m('meta[property="og:url"]'), ogImage: m('meta[property="og:image"]'),
+      ogW: m('meta[property="og:image:width"]'), ogSite: m('meta[property="og:site_name"]'),
+      twDesc: m('meta[name="twitter:description"]'), theme: m('meta[name="theme-color"]'),
+      h1: document.querySelector('h1').textContent,
+      ld: ld && { type: ld['@type'], url: ld.url, logo: ld.logo, founding: ld.foundingDate,
+        noRating: !ld.aggregateRating, noPostal: !ld.address.postalCode,
+        noPiercing: !/פירסינג/.test(JSON.stringify(ld)), noAcademy: !/academy/i.test(JSON.stringify(ld.sameAs)),
+        geo: ld.geo && [ld.geo.latitude, ld.geo.longitude] },
       poster: document.querySelector('.hero-video').getAttribute('poster'),
     };
   });
   const posterOk = seo.poster && (await page.evaluate(async (p) => (await fetch(p)).ok, seo.poster));
-  check('OG image + JSON-LD (244 reviews) + hero poster',
-    !!seo.ogImage && seo.ldType === 'TattooParlor' && seo.reviewCount === 244 && posterOk,
-    JSON.stringify(seo));
+  const logoOk = seo.ld && (await page.evaluate(async (p) => (await fetch(new URL(p).pathname)).ok, seo.ld.logo));
+  check('SEO: title + description target "קעקועים" + ראשון לציון, canonical, h1',
+    /קעקועים/.test(seo.title) && /ראשון לציון/.test(seo.title) && /קעקועים/.test(seo.desc) && /ראשון לציון/.test(seo.desc) &&
+    seo.desc.length <= 155 && seo.canonical === 'https://lizvampiretattoo.com/' && /קעקועים/.test(seo.h1) && seo.theme === '#060606',
+    JSON.stringify({ title: seo.title.length, desc: seo.desc.length, canonical: seo.canonical, theme: seo.theme }));
+  check('social preview: og url/site/image 1200w/twitter description + hero poster',
+    seo.ogUrl === 'https://lizvampiretattoo.com/' && seo.ogImage === 'https://lizvampiretattoo.com/assets/img/og.jpg' &&
+    seo.ogW === '1200' && !!seo.ogSite && !!seo.twDesc && posterOk, JSON.stringify({ ogUrl: seo.ogUrl, ogW: seo.ogW, posterOk }));
+  check('business info for Google: TattooParlor, url/logo/1996, no rating/postal/piercing/academy',
+    seo.ld && seo.ld.type === 'TattooParlor' && seo.ld.url === 'https://lizvampiretattoo.com/' && logoOk && seo.ld.founding === '1996' &&
+    seo.ld.noRating && seo.ld.noPostal && seo.ld.noPiercing && seo.ld.noAcademy && seo.ld.geo[0] === 31.9611,
+    JSON.stringify(seo.ld));
+  const crawl = await page.evaluate(async () => {
+    const r = await fetch('/robots.txt'); const rt = await r.text();
+    const sm = await fetch('/sitemap.xml'); const st = await sm.text();
+    return { robots: r.ok && /Sitemap: https:\/\/lizvampiretattoo\.com\/sitemap\.xml/.test(rt),
+      sitemap: sm.ok && ['', 'accessibility.html', 'privacy.html', 'terms.html'].every(u => st.includes('<loc>https://lizvampiretattoo.com/' + u + '</loc>')) };
+  });
+  check('robots.txt points to sitemap.xml; sitemap lists all 4 pages', crawl.robots && crawl.sitemap, JSON.stringify(crawl));
 
   // FAQ accordion
   const faqCount = await page.evaluate(() => document.querySelectorAll('#faq details').length);
