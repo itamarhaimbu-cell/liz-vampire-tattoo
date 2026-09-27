@@ -49,6 +49,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Suez+One&family=Metamorphous&family=Assistant:wght@200;300;400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/lenis.css">
 <link rel="stylesheet" href="css/main.css">
+<link rel="stylesheet" href="css/common.css">
+<script src="js/common.js"></script>
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" type="image/png" sizes="48x48" href="/assets/img/favicon-48.png">
 <link rel="icon" type="image/png" sizes="96x96" href="/assets/img/favicon-96.png">
@@ -56,6 +58,8 @@
 <link rel="apple-touch-icon" href="/assets/img/favicon.png">
 </head>
 <body>
+
+<a class="skip-link" href="#main">דלג לתוכן</a>
 
 <!-- film grain over everything -->
 <div class="grain" aria-hidden="true"></div>
@@ -74,11 +78,11 @@
     <a href="#contact">המיקום</a>
   </nav>
   <a href="tel:039503487" class="nav-cta"><svg class="ic-phone" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25c1.12.37 2.33.57 3.6.57a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.57a1 1 0 0 1-.25 1z"/></svg><span>לתיאום תור</span><span class="cta-num" dir="ltr">03-9503487</span></a>
-  <button id="menuBtn" aria-label="תפריט"><span></span><span></span></button>
+  <button id="menuBtn" aria-label="תפריט" aria-expanded="false" aria-controls="mobileMenu"><span></span><span></span></button>
 </header>
 
 <!-- mobile menu overlay -->
-<div id="mobileMenu" hidden>
+<div id="mobileMenu" role="dialog" aria-modal="true" aria-label="תפריט ניווט" hidden>
   <button id="menuClose" aria-label="סגירה">✕</button>
   <nav>
     <a href="#story">הסיפור</a>
@@ -92,9 +96,11 @@
 </div>
 
 <!-- ============ HERO — ink mask: the film loops inside the letters, scroll zooms through them ============ -->
+<main id="main">
+
 <section id="hero" class="hero-mask">
   <div class="pin">
-    <video class="hero-video" muted loop playsinline autoplay preload="auto" poster="assets/img/hero-poster.jpg" src="assets/video/hero_hd.mp4"></video>
+    <video aria-hidden="true" class="hero-video" muted loop playsinline autoplay preload="auto" poster="assets/img/hero-poster.jpg" src="assets/video/hero_hd.mp4"></video>
     <div class="vignette" aria-hidden="true"></div>
     <canvas class="mask-canvas" aria-hidden="true"></canvas>
 
@@ -118,7 +124,7 @@
 
 <!-- ============ STORY — over clip 3: THE STUDIO ============ -->
 <section id="story" class="video-section">
-  <video class="bg-video" muted loop playsinline autoplay preload="metadata" src="assets/video/studio.mp4"></video>
+  <video aria-hidden="true" class="bg-video" muted loop playsinline autoplay preload="metadata" src="assets/video/studio.mp4"></video>
   <div class="video-shade" aria-hidden="true"></div>
   <div class="section-inner story-inner">
     <h2 class="display reveal">היינו כאן לפני<br>שזה היה מגניב.</h2>
@@ -130,7 +136,7 @@
 <section id="craft" class="scrub-section" data-scrub="line" data-video="assets/video/line.mp4">
   <div class="pin">
     <canvas class="scrub-canvas" aria-hidden="true"></canvas>
-    <video class="scrub-fallback" muted loop playsinline autoplay preload="metadata" src="assets/video/line.mp4"></video>
+    <video aria-hidden="true" class="scrub-fallback" muted loop playsinline autoplay preload="metadata" src="assets/video/line.mp4"></video>
     <div class="vignette" aria-hidden="true"></div>
     <h2 class="display stage stage-line" data-from="0.05" data-to="0.45">ככה נראה ניסיון.</h2>
     <p class="stage stage-line" data-from="0.55" data-to="0.95">לא בתעודות ולא בקירות —<br>בקו אחד רציף, ביד אחת שקטה.</p>
@@ -147,14 +153,14 @@
         <h3 class="display">ליז</h3>
         <p class="artist-role">המייסדת</p>
         <p class="artist-bio">פתחה את הדלת ב־1996, כשכמעט לא היו<br>מקעקעות בארץ. שלושים שנה של מחט, דיו —<br>ואנשים שחוזרים.</p>
-        <a class="artist-ig" href="https://www.instagram.com/liz_vampire_tattoo_1" target="_blank" rel="noopener">@liz_vampire_tattoo_1</a>
+        <a class="artist-ig" href="https://www.instagram.com/liz_vampire_tattoo_1" target="_blank" rel="noopener">@liz_vampire_tattoo_1<span class="sr-only"> (נפתח בחלון חדש)</span></a>
       </article>
       <article class="artist reveal">
         <span class="artist-num" aria-hidden="true">08</span>
         <h3 class="display">רותם</h3>
         <p class="artist-role">ריאליזם · 8 שנים</p>
         <p class="artist-bio">גדל בין הכיסא למכונה. שמונה שנים מקעקע,<br>מתמחה בריאליזם — פורטרטים שנראים<br>כאילו נשמו פעם.</p>
-        <a class="artist-ig" href="https://www.instagram.com/dr_i_n_k_" target="_blank" rel="noopener">@dr_i_n_k_</a>
+        <a class="artist-ig" href="https://www.instagram.com/dr_i_n_k_" target="_blank" rel="noopener">@dr_i_n_k_<span class="sr-only"> (נפתח בחלון חדש)</span></a>
       </article>
     </div>
   </div>
@@ -162,7 +168,7 @@
 
 <!-- ============ STYLES — over clip 4: THE REVEAL ============ -->
 <section id="styles" class="video-section">
-  <video class="bg-video" muted loop playsinline autoplay preload="metadata" src="assets/video/reveal.mp4"></video>
+  <video aria-hidden="true" class="bg-video" muted loop playsinline autoplay preload="metadata" src="assets/video/reveal.mp4"></video>
   <div class="video-shade" aria-hidden="true"></div>
   <div class="section-inner">
     <p class="kicker reveal">הסגנונות</p>
@@ -184,11 +190,11 @@
     <p class="kicker reveal">העבודות</p>
     <p class="gallery-note reveal">מבחר קטן מתוך אלפי קעקועים שנעשו כאן לאורך השנים.</p>
     <p class="gallery-hint reveal">עברו עם העכבר — הצבע חוזר לרגע.</p>
-    <div class="gallery-filters reveal" role="tablist">
-      <button class="gf active" data-filter="all">הכל</button>
-      <button class="gf" data-filter="realism">ריאליזם</button>
-      <button class="gf" data-filter="myth">מיתולוגיה</button>
-      <button class="gf" data-filter="color">צבע</button>
+    <div class="gallery-filters reveal" role="group" aria-label="סינון עבודות לפי סגנון">
+      <button class="gf active" data-filter="all" aria-pressed="true">הכל</button>
+      <button class="gf" data-filter="realism" aria-pressed="false">ריאליזם</button>
+      <button class="gf" data-filter="myth" aria-pressed="false">מיתולוגיה</button>
+      <button class="gf" data-filter="color" aria-pressed="false">צבע</button>
     </div>
     <div class="gallery-grid">
       <figure class="gitem reveal" data-style="realism"><img src="assets/img/work/w01.jpg" alt="קעקוע — לוחם סמוראי" loading="lazy"><figcaption>לוחם סמוראי</figcaption></figure>
@@ -238,7 +244,7 @@
 <!-- ============ STUDIO — film-strip pan of the real room ============ -->
 <section id="studio" class="strip-section">
   <div class="pin strip-pin">
-    <div class="strip-track">
+    <div class="strip-track" tabindex="0" role="region" aria-label="תמונות מהסטודיו">
       <div class="strip-lead">
         <p class="kicker">הסטודיו</p>
         <h2 class="display">שחור, לבן, ונקי.</h2>
@@ -273,7 +279,7 @@
     </svg>
     <p class="proof-score reveal"><strong>4.6</strong> · 244 ביקורות בגוגל</p>
     <p class="proof-line reveal">שלושים שנה של מוניטין. לא רק אצלנו — גם בגוגל.</p>
-    <a class="proof-link reveal" href="https://www.google.com/maps/search/liz+vampire+tattoo+rishon+lezion" target="_blank" rel="noopener">לכל הביקורות ←</a>
+    <a class="proof-link reveal" href="https://www.google.com/maps/search/liz+vampire+tattoo+rishon+lezion" target="_blank" rel="noopener">לכל הביקורות ←<span class="sr-only"> (נפתח בחלון חדש)</span></a>
   </div>
 </section>
 
@@ -317,7 +323,7 @@
 <section id="academy" class="inverted">
   <div class="section-inner academy-inner">
     <p class="academy-line">רוצה ללמוד לקעקע? יש לנו אקדמיה.</p>
-    <a class="btn btn-invert" href="https://www.lizvampireacademy.com/" target="_blank" rel="noopener">Liz Vampire Academy ←</a>
+    <a class="btn btn-invert" href="https://www.lizvampireacademy.com/" target="_blank" rel="noopener">Liz Vampire Academy ←<span class="sr-only"> (נפתח בחלון חדש)</span></a>
   </div>
 </section>
 
@@ -330,7 +336,7 @@
         <p class="contact-big display">הרצל 91,<br>ראשון לציון</p>
         <p>א׳–ה׳ · <span dir="ltr">11:00–21:00</span></p>
         <p><a href="tel:039503487">03-9503487</a></p>
-        <p><a href="https://www.instagram.com/liz_vampire_tattoo_1" target="_blank" rel="noopener">@liz_vampire_tattoo_1</a></p>
+        <p><a href="https://www.instagram.com/liz_vampire_tattoo_1" target="_blank" rel="noopener">@liz_vampire_tattoo_1<span class="sr-only"> (נפתח בחלון חדש)</span></a></p>
       </address>
     </div>
     <div class="map-wrap reveal">
@@ -339,17 +345,20 @@
   </div>
 </section>
 
+</main>
+
 <footer>
   <p><span class="foot-mark">LIZ VAMPIRE TATTOO</span> · הרצל 91, ראשון לציון · מאז 1996</p>
+  <p class="foot-links"><a href="accessibility.html">הצהרת נגישות</a> · <a href="privacy.html">מדיניות פרטיות</a> · <a href="terms.html">תנאי שימוש</a></p>
 </footer>
 
 <!-- mobile sticky bar -->
-<div class="mobile-bar">
+<div class="mobile-bar" role="complementary" aria-label="חיוג מהיר">
   <a href="tel:039503487" class="mb-book"><span class="mb-ic"><svg class="ic-phone" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25c1.12.37 2.33.57 3.6.57a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.57a1 1 0 0 1-.25 1z"/></svg></span><span class="mb-text"><span class="mb-main">התקשרו לייעוץ חינם</span><span class="mb-sub"><span dir="ltr">03-9503487</span> · <span dir="ltr">4.6★</span> · 244 ביקורות</span></span></a>
 </div>
 
 <!-- lightbox -->
-<div id="lightbox" hidden>
+<div id="lightbox" role="dialog" aria-modal="true" aria-label="תצוגת עבודה" hidden>
   <button id="lbClose" aria-label="סגירה">✕</button>
   <button id="lbPrev" class="lb-nav" aria-label="הקודם">‹</button>
   <button id="lbNext" class="lb-nav" aria-label="הבא">›</button>

@@ -456,6 +456,158 @@ function check(name, ok, detail) {
     JSON.stringify(mobStrip));
   check('mobile: no page errors', mpErrors.length === 0, mpErrors.slice(0, 3).join(' | '));
 
+  /* ================= ACCESSIBILITY (IS 5568 / WCAG 2.0 AA) ================= */
+  const AXE = require('fs').readFileSync(require.resolve('axe-core/axe.min.js'), 'utf8');
+  const wait = (ms) => new Promise(r => setTimeout(r, ms));
+  async function axeViolations(pg) {
+    // walk the page so scroll-revealed content is audited in its visible state
+    await pg.evaluate(async () => {
+      for (let y = 0; y < document.body.scrollHeight; y += 700) { window.scrollTo(0, y); await new Promise(r => setTimeout(r, 30)); }
+      window.scrollTo(0, 0);
+      document.querySelectorAll('.reveal').forEach(e => e.classList.add('visible'));
+    });
+    await wait(600);
+    await pg.addScriptTag({ content: AXE });
+    return pg.evaluate(async () => (await axe.run(document, { runOnly: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'best-practice'] }))
+      .violations.map(v => `${v.id}(${v.nodes.length}): ${v.nodes[0].target.join(' ')}`));
+  }
+  async function freshPage(vp) {
+    const ctx = await browser.createBrowserContext();   // clean storage = first-time visitor
+    const pg = await ctx.newPage();
+    await pg.setViewport(vp);
+    return pg;
+  }
+  const DESK = { width: 1440, height: 900 };
+  const MOB = { width: 390, height: 844, isMobile: true, hasTouch: true };
+
+  // automated audit, desktop + mobile, plus every policy page
+  const ad = await freshPage(DESK);
+  await ad.goto(URL, { waitUntil: 'networkidle2' }); await wait(1500);
+  const axeDesk = await axeViolations(ad);
+  check('a11y: axe WCAG 2.1 AA — 0 violations (desktop)', axeDesk.length === 0, axeDesk.join(' | '));
+  const am = await freshPage(MOB);
+  await am.goto(URL, { waitUntil: 'networkidle2' }); await wait(1500);
+  const axeMob = await axeViolations(am);
+  check('a11y: axe WCAG 2.1 AA — 0 violations (mobile)', axeMob.length === 0, axeMob.join(' | '));
+  await am.browserContext().close();
+  for (const slug of ['accessibility', 'privacy', 'terms']) {
+    const lp = await freshPage(DESK);
+    const resp = await lp.goto(URL + slug + '.html', { waitUntil: 'networkidle2' });
+    const h1 = await lp.evaluate(() => (document.querySelector('h1') || {}).textContent || '');
+    const v = await axeViolations(lp);
+    check(`policy page ${slug}.html: 200, has heading, 0 axe violations`, resp.status() === 200 && h1.length > 3 && v.length === 0,
+      `status=${resp.status()} h1="${h1}" ${v.join(' | ')}`);
+    await lp.browserContext().close();
+  }
+  const footLinks = await ad.evaluate(() => ['accessibility', 'privacy', 'terms'].every(s => !!document.querySelector(`footer a[href="${s}.html"]`)));
+  check('footer links to accessibility / privacy / terms', footLinks);
+
+  // keyboard: skip link is the first stop and lands focus on <main>
+  await ad.goto(URL, { waitUntil: 'networkidle2' }); await wait(1500);
+  await ad.keyboard.press('Tab');
+  const firstStop = await ad.evaluate(() => document.activeElement.className);
+  await ad.keyboard.press('Enter'); await wait(400);
+  const afterSkip = await ad.evaluate(() => document.activeElement.id);
+  check('keyboard: first Tab = skip link, Enter moves focus to main', firstStop === 'skip-link' && afterSkip === 'main', `first=${firstStop} after=${afterSkip}`);
+
+  // visible focus ring
+  const ring = await ad.evaluate(() => {
+    const a = document.querySelector('.topbar nav a'); a.focus();
+    const cs = getComputedStyle(a); return { w: parseFloat(cs.outlineWidth), style: cs.outlineStyle };
+  });
+  check('keyboard: focus ring is a solid 3px outline', ring.w >= 3 && ring.style === 'solid', JSON.stringify(ring));
+
+  // gallery by keyboard + lightbox as a dialog
+  const kbGalTab = await ad.evaluate(() => [...document.querySelectorAll('.gitem')].filter(f => { const b = f.querySelector('button.gitem-open'); return b && b.tabIndex === 0 && b.getAttribute('aria-label'); }).length);
+  await ad.evaluate(() => { const f = document.querySelector('.gitem .gitem-open'); f.scrollIntoView({ block: 'center' }); f.focus(); });
+  await ad.keyboard.press('Enter'); await wait(300);
+  const kbLbOpen = await ad.evaluate(() => ({ open: !document.getElementById('lightbox').hidden, focus: document.activeElement.id }));
+  for (let i = 0; i < 5; i++) await ad.keyboard.press('Tab');
+  const kbLbTrapped = await ad.evaluate(() => document.getElementById('lightbox').contains(document.activeElement));
+  await ad.keyboard.press('Escape'); await wait(200);
+  const kbLbBack = await ad.evaluate(() => ({ closed: document.getElementById('lightbox').hidden, back: document.activeElement === document.querySelector('.gitem .gitem-open') }));
+  check('keyboard: 40 photos open with Enter; lightbox traps Tab; Esc returns focus',
+    kbGalTab === 40 && kbLbOpen.open && kbLbOpen.focus === 'lbClose' && kbLbTrapped && kbLbBack.closed && kbLbBack.back,
+    JSON.stringify({ kbGalTab, kbLbOpen, kbLbTrapped, kbLbBack }));
+
+  // accessibility menu: side tab opens/closes, options apply + persist
+  const menu0 = await ad.evaluate(() => {
+    const t = document.querySelector('.a11y-tab');
+    const r = t.getBoundingClientRect();
+    return { exists: !!t, label: t.textContent.trim(), rightEdge: Math.round(innerWidth - r.right), expanded: t.getAttribute('aria-expanded') };
+  });
+  await ad.click('.a11y-tab'); await wait(450);
+  const menu1 = await ad.evaluate(() => ({ expanded: document.querySelector('.a11y-tab').getAttribute('aria-expanded'),
+    panel: !document.getElementById('a11yPanel').hidden, focusIn: document.getElementById('a11yPanel').contains(document.activeElement),
+    opts: document.querySelectorAll('.a11y-opt').length }));
+  await ad.keyboard.press('Escape'); await wait(400);
+  const menu2 = await ad.evaluate(() => ({ closed: document.getElementById('a11yPanel').hidden, focusTab: document.activeElement.classList.contains('a11y-tab') }));
+  check('a11y menu: side tab opens panel, Esc closes and returns focus',
+    menu0.exists && menu0.label === 'נגישות' && menu0.rightEdge === 0 && menu1.expanded === 'true' && menu1.panel && menu1.focusIn && menu1.opts === 4 && menu2.closed && menu2.focusTab,
+    JSON.stringify({ menu0, menu1, menu2 }));
+
+  await ad.click('.a11y-tab'); await wait(400);
+  await ad.click('.a11y-opt[data-opt="contrast"]');
+  await ad.click('.a11y-size-ctl [data-size="1"]');
+  await ad.click('.a11y-opt[data-opt="links"]');
+  await ad.click('.a11y-opt[data-opt="font"]');
+  await ad.reload({ waitUntil: 'networkidle2' }); await wait(800);
+  const persisted = await ad.evaluate(() => ({
+    cls: ['a11y-contrast', 'a11y-text-1', 'a11y-links', 'a11y-font'].filter(c => document.documentElement.classList.contains(c)).length,
+    rootPx: parseFloat(getComputedStyle(document.documentElement).fontSize),
+    bone: getComputedStyle(document.documentElement).getPropertyValue('--bone').trim(),
+    pressed: document.querySelectorAll('.a11y-opt[aria-pressed="true"]').length,
+    noHScroll: document.documentElement.scrollWidth <= innerWidth + 1 }));
+  check('a11y menu: contrast / text size / links / font apply and persist after reload',
+    persisted.cls === 4 && Math.abs(persisted.rootPx - 18.4) < 0.2 && persisted.bone === '#fff' && persisted.pressed === 3 && persisted.noHScroll,
+    JSON.stringify(persisted));
+  await ad.click('.a11y-tab'); await wait(400);
+  await ad.click('.a11y-reset'); await wait(200);
+  const resetCls = await ad.evaluate(() => document.documentElement.className);
+  check('a11y menu: reset clears every setting', !/a11y-/.test(resetCls), resetCls);
+
+  // stop animations: static layout, no mask zoom, every video paused
+  await ad.click('.a11y-tab'); await wait(400);
+  await Promise.all([ad.waitForNavigation({ waitUntil: 'networkidle2' }), ad.click('.a11y-opt[data-opt="still"]')]);
+  await wait(1500);
+  const still = await ad.evaluate(() => ({
+    cls: document.documentElement.classList.contains('a11y-still'),
+    mask: getComputedStyle(document.querySelector('.mask-canvas')).display,
+    solidTitle: getComputedStyle(document.querySelector('.hero-copy-mobile')).display,
+    videosPaused: [...document.querySelectorAll('video')].every(v => v.paused),
+    lenis: !!window.__lenis }));
+  check('a11y menu: "stop animations" = static layout, all videos paused',
+    still.cls && still.mask === 'none' && still.solidTitle === 'flex' && still.videosPaused && !still.lenis, JSON.stringify(still));
+  await ad.browserContext().close();
+
+  // cookie notice: shown once, dismissal remembered
+  const ck = await freshPage(DESK);
+  await ck.goto(URL, { waitUntil: 'networkidle2' }); await wait(800);
+  const ck1 = await ck.evaluate(() => !!document.querySelector('.cookie-note'));
+  await ck.click('.cookie-note button');
+  await ck.reload({ waitUntil: 'networkidle2' }); await wait(600);
+  const ck2 = await ck.evaluate(() => !!document.querySelector('.cookie-note'));
+  check('cookie notice shows on first visit, dismissal remembered', ck1 && !ck2, JSON.stringify({ first: ck1, afterDismiss: ck2 }));
+
+  // 200% browser zoom (1440 wide at 200% = 720 CSS px): no sideways scrolling
+  await ck.setViewport({ width: 720, height: 450 });
+  await ck.reload({ waitUntil: 'networkidle2' }); await wait(1200);
+  const zoom = await ck.evaluate(() => ({ sw: document.documentElement.scrollWidth, w: innerWidth }));
+  check('200% zoom: no horizontal scrolling', zoom.sw <= zoom.w + 1, JSON.stringify(zoom));
+  await ck.browserContext().close();
+
+  // mobile menu announces state, takes focus, Esc returns it
+  const mm = await freshPage(MOB);
+  await mm.goto(URL, { waitUntil: 'networkidle2' }); await wait(1200);
+  await mm.evaluate(() => document.getElementById('menuBtn').focus());
+  await mm.keyboard.press('Enter'); await wait(400);
+  const mm1 = await mm.evaluate(() => ({ exp: document.getElementById('menuBtn').getAttribute('aria-expanded'), focusIn: document.getElementById('mobileMenu').contains(document.activeElement) }));
+  await mm.keyboard.press('Escape'); await wait(450);
+  const mm2 = await mm.evaluate(() => ({ exp: document.getElementById('menuBtn').getAttribute('aria-expanded'), back: document.activeElement.id, hidden: document.getElementById('mobileMenu').hidden }));
+  check('mobile menu: aria-expanded, focus moves in, Esc closes and returns focus',
+    mm1.exp === 'true' && mm1.focusIn && mm2.exp === 'false' && mm2.back === 'menuBtn' && mm2.hidden, JSON.stringify({ mm1, mm2 }));
+  await mm.browserContext().close();
+
   await browser.close();
   const failed = results.filter(r => !r.ok);
   console.log('\n' + (failed.length ? `${failed.length} FAILED` : 'ALL ' + results.length + ' CHECKS PASSED'));
