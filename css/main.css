@@ -75,9 +75,11 @@ img{max-width:100%;display:block}
 .topbar nav a{opacity:.75;transition:opacity .3s}
 .topbar nav a:hover{opacity:1}
 .nav-cta{
-  justify-self:end;border:1px solid var(--bone);padding:.3rem 1.1rem;border-radius:999px;
-  font-size:.95rem;font-weight:400;
+  justify-self:end;display:inline-flex;align-items:center;gap:.55rem;
+  background:var(--bone);color:var(--black);padding:.55rem 1.3rem;border-radius:999px;
+  font-size:.95rem;font-weight:600;
 }
+.nav-cta .cta-num{font-weight:400;opacity:.75}
 #menuBtn{
   display:none;background:none;border:none;cursor:pointer;padding:.7rem .4rem;
   flex-direction:column;gap:7px;
@@ -128,12 +130,16 @@ img{max-width:100%;display:block}
 .hero-copy-mobile{display:none}
 .hero-title-m{font-family:"Metamorphous",serif;font-size:clamp(2rem,10.5vw,3.2rem);line-height:1.25;text-shadow:0 4px 60px rgba(0,0,0,.85)}
 .hero-sub{
-  position:absolute;bottom:15vh;right:50%;transform:translateX(50%);z-index:3;
+  position:absolute;bottom:15.5rem;right:50%;transform:translateX(50%);z-index:3;
   font-size:clamp(1.05rem,1.8vw,1.4rem);letter-spacing:.14em;
   color:var(--bone);font-weight:300;white-space:nowrap;
   text-shadow:0 1px 8px rgba(0,0,0,.95),0 2px 30px rgba(0,0,0,.9);
 }
-#hero .scroll-hint{z-index:3}
+#hero .scroll-hint{z-index:3;bottom:1.2rem}
+#hero .hint-bar{height:30px}
+/* first-screen call CTA — fades out with the tagline as the zoom starts */
+.hero-cta{position:absolute;bottom:7.6rem;right:0;left:0;margin:0 auto;width:max-content;text-align:center;z-index:5}
+.hero-cta .cta-trust{text-shadow:0 1px 8px rgba(0,0,0,.95)}
 
 /* ---------- scrub / pinned sections ---------- */
 .scrub-section{position:relative;height:250vh}
@@ -309,6 +315,22 @@ section{position:relative}
 .btn-ghost{border-color:var(--line);color:var(--bone-dim)}
 .btn-ghost:hover{border-color:var(--bone);background:none;color:var(--bone)}
 
+/* ---------- call CTAs (every one is a real tel: link — Ads call_click binds at load) ---------- */
+.ic-phone{width:1.1em;height:1.1em;flex:none}
+.btn-call{
+  display:inline-flex;align-items:center;justify-content:center;gap:.7rem;
+  min-height:56px;padding:.95rem 2.2rem;font-size:1.1rem;font-weight:600;letter-spacing:.05em;
+}
+.btn-call .cta-num{font-weight:400;opacity:.8;letter-spacing:.04em;padding-inline-start:.7rem;border-inline-start:1px solid rgba(6,6,6,.28)}
+.btn-call:hover .cta-num{border-color:var(--line)}
+.cta-trust{margin-top:1rem;font-size:.95rem;color:var(--bone-dim);letter-spacing:.06em}
+.call-block{text-align:center;margin-top:clamp(3.2rem,7vh,5rem)}
+.call-block-tight{margin-top:2.2rem}
+.call-lead{font-family:var(--serif);font-size:clamp(1.4rem,2.6vw,2rem);margin-bottom:1.6rem}
+/* one short ring of the handset after load — draws the eye without blinking forever */
+@keyframes ring{0%,60%,100%{transform:rotate(0)}10%{transform:rotate(-16deg)}20%{transform:rotate(14deg)}30%{transform:rotate(-10deg)}40%{transform:rotate(8deg)}50%{transform:rotate(-4deg)}}
+.nav-cta .ic-phone,.hero-cta .ic-phone,.mb-ic svg{animation:ring 1.3s ease 1.6s 2}
+
 /* ---------- social proof ---------- */
 #proof{border-top:1px solid var(--line)}
 .proof-inner{text-align:center;padding-top:clamp(4rem,9vh,6rem);padding-bottom:clamp(4rem,9vh,6rem)}
@@ -418,6 +440,10 @@ footer{
    viewport — here they become height-aware and vertical rhythm tightens so more of each
    section lands on screen at once. desktop (tall monitors) is untouched. */
 @media (min-width:821px) and (max-height:820px){
+  /* hero foot: tagline + call CTA must clear TATTOO on short screens — drop the scroll hint, the CTA takes its place */
+  #hero .scroll-hint{display:none}
+  .hero-cta{bottom:1.6rem}
+  .hero-sub{bottom:8.6rem}
   .section-inner{padding-top:clamp(3rem,8vh,5.5rem);padding-bottom:clamp(3rem,8vh,5.5rem)}
   .kicker{margin-bottom:1.8rem}
   .story-inner h2{font-size:clamp(2.6rem,9vh,4.8rem)}
@@ -445,7 +471,7 @@ footer{
   .scrub-section{height:220vh}
   .pin{height:100svh}
   .hero-sub{bottom:22vh;font-size:1rem}
-  #hero .scroll-hint{bottom:calc(72px + env(safe-area-inset-bottom))}
+  #hero .scroll-hint{bottom:calc(80px + env(safe-area-inset-bottom))}
   .hint-bar{height:34px}
   .stage-line{width:94%;font-size:clamp(1.5rem,6.5vw,2.4rem);padding:1.8rem .6rem}
 
@@ -476,10 +502,12 @@ footer{
   .consult-inner h2{font-size:clamp(2.4rem,11vw,3.4rem)}
   .booking-inner h2{font-size:clamp(1.7rem,7.5vw,2.4rem)}
   .proof-score{font-size:1.5rem}
-  body{padding-bottom:calc(60px + env(safe-area-inset-bottom))}
+  .hero-cta{display:none}
+  .btn-call{font-size:1rem;padding:.85rem 1.3rem;gap:.55rem;letter-spacing:.02em}
+  body{padding-bottom:calc(68px + env(safe-area-inset-bottom))}
   .mobile-bar{
     display:flex;position:fixed;bottom:0;right:0;left:0;z-index:8500;
-    height:calc(60px + env(safe-area-inset-bottom));
+    height:calc(68px + env(safe-area-inset-bottom));
     padding-bottom:env(safe-area-inset-bottom);
     background:rgba(6,6,6,.92);backdrop-filter:blur(12px);border-top:1px solid var(--line);
   }
@@ -487,12 +515,18 @@ footer{
     flex:1;display:flex;align-items:center;justify-content:center;
     font-size:1.05rem;letter-spacing:.1em;font-weight:400;
   }
-  .mb-book{background:var(--bone);color:var(--black)}
+  .mb-book{background:var(--bone);color:var(--black);gap:.85rem;letter-spacing:normal}
+  .mb-ic{width:40px;height:40px;border-radius:50%;background:var(--black);color:var(--bone);display:grid;place-items:center;flex:none}
+  .mb-ic svg{width:20px;height:20px}
+  .mb-text{display:flex;flex-direction:column;line-height:1.25}
+  .mb-main{font-weight:700;font-size:1.15rem}
+  .mb-sub{font-size:.85rem;opacity:.72}
 }
 @media (prefers-reduced-motion:reduce){
   .grain{animation:none}
   .reveal{transition:none;opacity:1;transform:none}
   .hint-bar{animation:none}
+  .nav-cta .ic-phone,.hero-cta .ic-phone,.mb-ic svg{animation:none}
   /* degrade pinned/scrubbed sections to the static mobile layout */
   .hero-mask{height:auto}
   .scrub-section{height:auto}

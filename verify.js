@@ -307,14 +307,24 @@ function check(name, ok, detail) {
   const faqOpen = await page.evaluate(() => document.querySelector('#faq details').open);
   check('FAQ: 5 items, accordion opens', faqCount === 5 && faqOpen, `items=${faqCount} open=${faqOpen}`);
 
-  // conversion tracking: clicking the consult "book" link records book_cta
-  await page.evaluate(() => {
-    const a = document.querySelector('#consult a[href="#booking"]');
-    if (a) a.click();
+  // conversion tracking: EVERY tel: CTA records call_click (the Google Ads conversion).
+  // click each one with navigation blocked, count call_click events vs links.
+  const callTrack = await page.evaluate(() => {
+    const links = [...document.querySelectorAll('a[href^="tel:"]')];
+    const before = (window.__events || []).filter(e => e.name === 'call_click').length;
+    links.forEach(a => {
+      a.addEventListener('click', e => e.preventDefault(), { once: true });
+      a.click();
+    });
+    const after = (window.__events || []).filter(e => e.name === 'call_click').length;
+    return { links: links.length, fired: after - before,
+      consultCalls: !!document.querySelector('#consult a[href="tel:039503487"]'),
+      galleryCall: !!document.querySelector('#gallery .call-block a[href="tel:039503487"]'),
+      proofCall: !!document.querySelector('#proof a[href="tel:039503487"]') };
   });
-  await new Promise(r => setTimeout(r, 200));
-  const events = await page.evaluate(() => (window.__events || []).map(e => e.name));
-  check('conversion tracking records events', events.includes('book_cta'), JSON.stringify(events));
+  check('every call CTA fires call_click (consult/gallery/proof included)',
+    callTrack.links >= 8 && callTrack.fired === callTrack.links && callTrack.consultCalls && callTrack.galleryCall && callTrack.proofCall,
+    JSON.stringify(callTrack));
 
   // academy strip
   const academy = await page.evaluate(() => {
