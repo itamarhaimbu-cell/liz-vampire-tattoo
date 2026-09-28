@@ -120,7 +120,19 @@
         var small = window.matchMedia('(max-width:820px)').matches;
         v.poster = small ? 'assets/img/hero-poster-m.jpg' : 'assets/img/hero-poster.jpg';
         v.preload = small ? 'metadata' : 'auto';
-        v.src = small ? 'assets/video/hero_sd.mp4' : 'assets/video/hero_hd.mp4';
+        // start the film right after the first contentful paint so it never competes with it (the poster covers the gap)
+        var started = false;
+        function start() {
+          if (started) return;
+          started = true;
+          v.src = small ? 'assets/video/hero_sd.mp4' : 'assets/video/hero_hd.mp4';
+        }
+        try {
+          new PerformanceObserver(function (list) {
+            if (list.getEntriesByName('first-contentful-paint').length) start();
+          }).observe({ type: 'paint', buffered: true });
+        } catch (e) { /* no paint timing: the timeout below starts it */ }
+        setTimeout(start, 1200);
       })(document.currentScript.previousElementSibling);
     </script>
     <div class="vignette" aria-hidden="true"></div>
