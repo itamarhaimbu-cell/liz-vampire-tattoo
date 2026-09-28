@@ -632,6 +632,43 @@ function check(name, ok, detail) {
     mm1.exp === 'true' && mm1.focusIn && mm2.exp === 'false' && mm2.back === 'menuBtn' && mm2.hidden, JSON.stringify({ mm1, mm2 }));
   await mm.browserContext().close();
 
+
+  /* ================= MOBILE LOAD WEIGHT (Google Ads landing-page experience) ================= */
+  {
+    const ctx = await browser.createBrowserContext();
+    const pp = await ctx.newPage();
+    await pp.setViewport({ width: 390, height: 844, isMobile: true, hasTouch: true, deviceScaleFactor: 3 });
+    const reqs = [];
+    pp.on('request', r => reqs.push(r.url()));
+    let barAtDCL = null;
+    pp.on('domcontentloaded', async () => {
+      barAtDCL = await pp.evaluate(() => {
+        const a = document.querySelector('.mobile-bar a'); const r = a.getBoundingClientRect();
+        const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+        return { tappable: !!hit && a.contains(hit), loaderUp: !document.getElementById('loader').classList.contains('done') };
+      }).catch(e => ({ err: e.message }));
+    });
+    await pp.goto(URL, { waitUntil: 'networkidle2', timeout: 60000 });
+    await new Promise(r => setTimeout(r, 1500));
+    const film = await pp.evaluate(() => { const v = document.querySelector('.hero-video'); return { src: v.currentSrc, poster: v.poster, videoWidth: v.videoWidth }; });
+    const hdRequested = reqs.some(u => u.includes('hero_hd.mp4'));
+    check('phone: hero plays the 1 MB SD film + small poster, never requests the 6.4 MB HD film',
+      /hero_sd\.mp4$/.test(film.src) && /hero-poster-m\.jpg$/.test(film.poster) && !hdRequested, JSON.stringify({ film, hdRequested }));
+    const earlyFilms = reqs.filter(u => /(studio|reveal|line)\.mp4/.test(u));
+    check('phone: below-the-fold films are not downloaded at page load', earlyFilms.length === 0, earlyFilms.join(' | '));
+    check('phone: call bar is tappable from the first frame (above the loading screen)', barAtDCL && barAtDCL.tappable, JSON.stringify(barAtDCL));
+    // scroll to the story film + gallery: film starts on approach, grid uses the 600px copies
+    await pp.evaluate(() => document.getElementById('story').scrollIntoView());
+    await new Promise(r => setTimeout(r, 1500));
+    const story = await pp.evaluate(() => { const v = document.querySelector('#story video'); return { src: v.currentSrc, playing: !v.paused }; });
+    await pp.evaluate(() => document.querySelector('.gallery-grid').scrollIntoView());
+    await new Promise(r => setTimeout(r, 1500));
+    const grid = await pp.evaluate(() => { const i = document.querySelector('.gitem img'); return { cur: i.currentSrc, full: i.src }; });
+    check('phone: story film loads when scrolled near; gallery grid uses 600px copies, lightbox keeps full size',
+      /studio\.mp4$/.test(story.src) && story.playing && /\/sm\/w\d\d\.jpg$/.test(grid.cur) && /\/work\/w\d\d\.jpg$/.test(grid.full),
+      JSON.stringify({ story, grid }));
+    await ctx.close();
+  }
   await browser.close();
   const failed = results.filter(r => !r.ok);
   console.log('\n' + (failed.length ? `${failed.length} FAILED` : 'ALL ' + results.length + ' CHECKS PASSED'));

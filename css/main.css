@@ -52,7 +52,7 @@ img{max-width:100%;display:block}
 #loader{
   position:fixed;inset:0;z-index:9500;background:var(--black);
   display:flex;align-items:center;justify-content:center;
-  transition:opacity .8s ease;
+  transition:opacity .5s ease;
 }
 #loader.done{opacity:0;pointer-events:none}
 .loader-mark{
@@ -88,7 +88,7 @@ img{max-width:100%;display:block}
 
 /* ---------- mobile menu overlay ---------- */
 #mobileMenu{
-  position:fixed;inset:0;z-index:9300;background:var(--black);
+  position:fixed;inset:0;z-index:9560;background:var(--black);
   display:flex;align-items:center;justify-content:center;
   opacity:0;transition:opacity .35s ease;
 }
@@ -149,6 +149,11 @@ img{max-width:100%;display:block}
 
 /* staged copy over video */
 .stage{opacity:0;transform:translateY(24px);will-change:opacity,transform;z-index:4}
+/* the tagline is on screen at scroll 0 anyway — paint it with the first frame instead of waiting
+   for main.js (it's the page's largest text = LCP). JS takes over with identical inline values. */
+@media (prefers-reduced-motion:no-preference){
+  html:not(.a11y-still) #hero .hero-sub.stage{opacity:1;transform:translateX(50%)}
+}
 .stage-line{
   position:absolute;top:50%;right:50%;transform:translate(50%,-40%);
   font-family:var(--serif);text-align:center;width:92%;
@@ -494,7 +499,7 @@ footer{
   .btn-call{font-size:1rem;padding:.85rem 1.3rem;gap:.55rem;letter-spacing:.02em}
   body{padding-bottom:calc(68px + env(safe-area-inset-bottom))}
   .mobile-bar{
-    display:flex;position:fixed;bottom:0;right:0;left:0;z-index:8500;
+    display:flex;position:fixed;bottom:0;right:0;left:0;z-index:9550;
     height:calc(68px + env(safe-area-inset-bottom));
     padding-bottom:env(safe-area-inset-bottom);
     background:rgba(6,6,6,.92);backdrop-filter:blur(12px);border-top:1px solid var(--line);

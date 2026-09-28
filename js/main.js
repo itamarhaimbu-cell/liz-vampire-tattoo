@@ -183,8 +183,6 @@
      those from a cached raster and corrupts them on reverse scroll. */
   (function buildHeroMask() {
     var section = document.getElementById('hero');
-    var video = section.querySelector('.hero-video');
-    if (isSmall) video.src = 'assets/video/hero_sd.mp4';
     if (reducedMotion) return; // static fallback (solid title) handled in CSS
     var canvas = section.querySelector('.mask-canvas');
     var ctx = canvas.getContext('2d');
@@ -297,6 +295,7 @@
         }
         canvas.style.opacity = fade.toFixed(3);
         lastScale = scale; lastFade = fade;
+        hideLoader();
       }
       state.hero = { progress: p, scale: scale, maskOpacity: fade };
       updateStages(section, p);
@@ -331,7 +330,7 @@
   }
   requestAnimationFrame(raf);
 
-  /* ---------- loader — waits for hero video ---------- */
+  /* ---------- loader — lifts on the first stencil frame (not the film), hard cap 1s ---------- */
   var loaderHidden = false;
   function hideLoader() {
     if (loaderHidden) return;
@@ -339,12 +338,27 @@
     document.getElementById('loader').classList.add('done');
     window.__heroReady = true;
   }
-  var heroVideo = document.querySelector('#hero .hero-video');
-  if (heroVideo) {
-    if (heroVideo.readyState >= 3) hideLoader();
-    else heroVideo.addEventListener('canplay', hideLoader, { once: true });
+  if (reducedMotion) hideLoader(); // static layout: nothing to wait for
+  setTimeout(hideLoader, 1000);    // hard cap
+
+  /* ---------- below-the-fold films: no download until scrolled near ---------- */
+  var lazyVids = document.querySelectorAll('video[data-src]');
+  if (lazyVids.length) {
+    var vio = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        var v = e.target;
+        if (!e.isIntersecting) return; // display:none (e.g. craft fallback behind the frame scrub) never intersects
+        vio.unobserve(v);
+        v.src = v.getAttribute('data-src');
+        v.removeAttribute('data-src');
+        if (reducedMotion) { v.preload = 'metadata'; return; } // still mode: first frame only (js/common.js keeps it paused)
+        v.preload = 'auto';
+        var pr = v.play();
+        if (pr && pr.catch) pr.catch(function () {});
+      });
+    }, { rootMargin: '100% 0px' });
+    lazyVids.forEach(function (v) { vio.observe(v); });
   }
-  setTimeout(hideLoader, 2500); // hard cap
 
   /* ---------- reveal on scroll ---------- */
   var io = new IntersectionObserver(function (entries) {
