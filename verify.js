@@ -15,6 +15,18 @@ function check(name, ok, detail) {
 (async () => {
   require('fs').mkdirSync(path.join(__dirname, 'verify-shots'), { recursive: true });
   const browser = await puppeteer.launch({ executablePath: EDGE, headless: 'new', args: ['--no-sandbox'] });
+  const GOOGLE_HIT = /google-analytics\.com\/(g\/)?collect|\/pagead\/(1p-conversion|1p-user-list|viewthroughconversion|conversion)|\/rmkt\/collect|\/ccm\/collect|doubleclick\.net\/pagead/;
+  browser.on('targetcreated', async (t) => {
+    if (t.type() !== 'page') return;
+    const pg = await t.page();
+    if (!pg) return;
+    await pg.setRequestInterception(true).catch(() => {});
+    pg.on('request', (r) => {
+      if (r.isInterceptResolutionHandled()) return;
+      if (GOOGLE_HIT.test(r.url())) r.respond({ status: 204, body: '' }).catch(() => {});
+      else r.continue().catch(() => {});
+    });
+  });
 
   /* ================= DESKTOP ================= */
   const page = await browser.newPage();
@@ -249,26 +261,30 @@ function check(name, ok, detail) {
   });
   check('nav links centered', Math.abs(nav.navCenter - nav.viewCenter) < 8, JSON.stringify(nav));
 
-  // call-only: nav CTA is a phone-call link, no WhatsApp anywhere
+  // WhatsApp is the main CTA: nav pill + menu CTA open WhatsApp; calling stays one tap away
+  const WA_PREFIX = 'https://wa.me/972542264377?text=';
   const callState = await page.evaluate(() => ({
-    navCta: (document.querySelector('.nav-cta') || {}).getAttribute ? document.querySelector('.nav-cta').getAttribute('href') : null,
-    menuCta: document.querySelector('.menu-cta') ? document.querySelector('.menu-cta').getAttribute('href') : null,
-    anyWa: !!document.querySelector('[data-wa], a[href*="wa.me"], a[href*="whatsapp"]'),
+    navCta: document.querySelector('.nav-cta').getAttribute('href'),
+    menuCta: document.querySelector('.menu-cta').getAttribute('href'),
+    menuCall: (document.querySelector('.menu-call') || { getAttribute: () => null }).getAttribute('href'),
+    waLinks: [...document.querySelectorAll('a[href*="wa.me/972542264377"]')].map(a => ({ href: a.getAttribute('href'), target: a.target, rel: a.rel })),
   }));
-  check('nav + menu CTA are call links (no WhatsApp on page)',
-    callState.navCta === 'tel:039503487' && callState.menuCta === 'tel:039503487' && !callState.anyWa,
-    JSON.stringify(callState));
+  check('WhatsApp is the main CTA: nav + menu open wa.me (prefilled, new tab), menu keeps a call link',
+    callState.navCta.startsWith(WA_PREFIX) && callState.menuCta.startsWith(WA_PREFIX) && callState.menuCall === 'tel:039503487' &&
+    callState.waLinks.length === 5 && callState.waLinks.every(w => w.href.startsWith(WA_PREFIX) && w.href.length > WA_PREFIX.length && w.target === '_blank' && /noopener/.test(w.rel)),
+    JSON.stringify({ nav: callState.navCta.slice(0, 40), menuCall: callState.menuCall, wa: callState.waLinks.length }));
 
-  // booking is a call CTA (form removed)
+  // booking: WhatsApp button first, phone number right under it, no form
   const bookingUi = await page.evaluate(() => {
     const b = document.querySelector('#booking');
     return {
       intro: !!b.querySelector('.booking-intro'),
-      callBtn: (b.querySelector('a.btn[href^="tel:"]') || {}).getAttribute ? b.querySelector('a.btn[href^="tel:"]').getAttribute('href') : null,
-      noForm: !b.querySelector('#waForm'),
+      waBtn: !!b.querySelector('a.btn[href*="wa.me/972542264377"]'),
+      callAlt: (b.querySelector('.booking-alt a[href^="tel:"]') || { getAttribute: () => null }).getAttribute('href'),
+      noForm: !b.querySelector('form'),
     };
   });
-  check('booking is a call CTA (form removed)', bookingUi.intro && bookingUi.callBtn === 'tel:039503487' && bookingUi.noForm, JSON.stringify(bookingUi));
+  check('booking: WhatsApp button + call alternative (no form)', bookingUi.intro && bookingUi.waBtn && bookingUi.callAlt === 'tel:039503487' && bookingUi.noForm, JSON.stringify(bookingUi));
 
   // social proof strip
   const proof = await page.evaluate(() => {
@@ -341,11 +357,31 @@ function check(name, ok, detail) {
       a.click();
     });
     const after = (window.__events || []).filter(e => e.name === 'call_click').length;
-    return { links: links.length, fired: after - before };
+    const conv = (window.dataLayer || []).filter(d => d[0] === 'event' && d[1] === 'conversion' && d[2] && d[2].send_to === 'AW-18472197461/JLzeCKmD4IMdENW6nehE').length;
+    return { links: links.length, fired: after - before, adsConversions: conv };
   });
   check('every call CTA fires call_click',
-    callTrack.links >= 5 && callTrack.fired === callTrack.links,
+    callTrack.links === 4 && callTrack.fired === callTrack.links && callTrack.adsConversions === callTrack.links,
     JSON.stringify(callTrack));
+
+  const waTrack = await page.evaluate(() => {
+    const links = [...document.querySelectorAll('a[href*="wa.me/972542264377"]')];
+    const per = links.map(a => {
+      const ev0 = (window.__events || []).filter(e => e.name === 'whatsapp_click').length;
+      const cv0 = (window.dataLayer || []).filter(d => d[0] === 'event' && d[1] === 'conversion' && d[2] && d[2].send_to === 'AW-18472197461/DzqeCJjpyYsdENW6nehE').length;
+      const call0 = (window.__events || []).filter(e => e.name === 'call_click').length;
+      a.addEventListener('click', e => e.preventDefault(), { once: true }); // don't open WhatsApp in the test browser
+      a.click();
+      return {
+        ev: (window.__events || []).filter(e => e.name === 'whatsapp_click').length - ev0,
+        cv: (window.dataLayer || []).filter(d => d[0] === 'event' && d[1] === 'conversion' && d[2] && d[2].send_to === 'AW-18472197461/DzqeCJjpyYsdENW6nehE').length - cv0,
+        call: (window.__events || []).filter(e => e.name === 'call_click').length - call0,
+      };
+    });
+    return { links: links.length, exactlyOne: per.every(p => p.ev === 1 && p.cv === 1 && p.call === 0), per };
+  });
+  check('every WhatsApp link fires exactly one whatsapp_click → AW-18472197461/DzqeCJjpyYsdENW6nehE',
+    waTrack.links === 5 && waTrack.exactlyOne, JSON.stringify({ links: waTrack.links, exactlyOne: waTrack.exactlyOne }));
 
   // academy strip
   const academy = await page.evaluate(() => {
@@ -417,7 +453,7 @@ function check(name, ok, detail) {
     galleryNear: Math.abs(document.querySelector('#gallery').getBoundingClientRect().top) < innerHeight * 1.2,
   }));
   check('mobile: hamburger menu opens, navigates, closes',
-    btnVisible && menuState.open && menuState.links === 7 && afterNav.closed && afterNav.galleryNear,
+    btnVisible && menuState.open && menuState.links === 8 && afterNav.closed && afterNav.galleryNear,
     JSON.stringify({ btnVisible, menuState, afterNav }));
 
   // hero ink-mask runs on mobile (portrait stencil over SD film)

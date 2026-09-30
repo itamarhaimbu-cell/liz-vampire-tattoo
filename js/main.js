@@ -9,6 +9,7 @@
   // call_click is the primary conversion; add more as you create conversion actions.
   var AW_CONVERSIONS = {
     call_click: 'JLzeCKmD4IMdENW6nehE', // "Website call click" conversion
+    whatsapp_click: 'DzqeCJjpyYsdENW6nehE', // "WhatsApp click" conversion (primary)
     book_cta:  ''                      // optional second action, leave '' to skip
   };
   var isSmall = window.matchMedia('(max-width:820px)').matches;        // layout choices only
@@ -512,9 +513,12 @@
     if (Math.abs(dx) > 50) lbShow(lbIndex + (dx > 0 ? 1 : -1)); // swipe follows finger, RTL-friendly
   }, { passive: true });
 
-  /* ---------- conversion event hooks (call-only) ---------- */
+  /* ---------- conversion event hooks (WhatsApp primary, calls secondary) ---------- */
   document.querySelectorAll('a[href^="tel:"]').forEach(function (a) {
     a.addEventListener('click', function () { track('call_click'); });
+  });
+  document.querySelectorAll('a[href*="wa.me/972542264377"]').forEach(function (a) {
+    a.addEventListener('click', function () { track('whatsapp_click'); });
   });
   document.querySelectorAll('#academy a, .proof-link').forEach(function (a) {
     a.addEventListener('click', function () { track(a.classList.contains('proof-link') ? 'reviews_click' : 'academy_click'); });

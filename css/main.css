@@ -108,9 +108,13 @@ img{max-width:100%;display:block}
 #mobileMenu nav a:nth-child(6){transition-delay:.25s}
 #mobileMenu nav a:nth-child(7){transition-delay:.3s}
 #mobileMenu .menu-cta{
-  font-family:var(--sans);font-size:1.1rem;letter-spacing:.12em;
-  background:var(--bone);color:var(--black);padding:.85rem 2.6rem;margin-top:1.2rem;
+  font-family:var(--sans);font-size:1.1rem;letter-spacing:.06em;font-weight:600;
+  background:var(--bone);color:var(--black);padding:.85rem 2.2rem;margin-top:1.2rem;
+  display:inline-flex;align-items:center;justify-content:center;gap:.6rem;
 }
+#mobileMenu .menu-cta .ic-wa{width:1.3em;height:1.3em}
+#mobileMenu .menu-call{font-family:var(--sans);font-size:1rem;color:var(--bone-dim);margin-top:-.6rem}
+#mobileMenu nav a:nth-child(8){transition-delay:.35s}
 #menuClose{
   position:absolute;top:1.4rem;left:1.6rem;background:none;border:1px solid var(--line);
   color:var(--bone);width:2.6rem;height:2.6rem;border-radius:50%;cursor:pointer;font-size:1rem;
@@ -327,7 +331,11 @@ section{position:relative}
 .cta-trust{margin-top:1rem;font-size:.95rem;color:var(--bone-dim);letter-spacing:.06em}
 /* one short ring of the handset after load — draws the eye without blinking forever */
 @keyframes ring{0%,60%,100%{transform:rotate(0)}10%{transform:rotate(-16deg)}20%{transform:rotate(14deg)}30%{transform:rotate(-10deg)}40%{transform:rotate(8deg)}50%{transform:rotate(-4deg)}}
-.nav-cta .ic-phone,.mb-ic svg{animation:ring 1.3s ease 1.6s 2}
+.nav-cta .ic-wa,.mb-ic svg{animation:ring 1.3s ease 1.6s 2}
+.ic-wa{width:1.15em;height:1.15em;flex:none}
+.booking-alt{margin-top:1.1rem;font-size:1.05rem;color:var(--bone-dim)}
+.booking-alt a{color:var(--bone);border-bottom:1px solid var(--bone-dim);padding-bottom:.05rem}
+.booking-alt a:hover{border-color:var(--bone)}
 
 /* ---------- social proof ---------- */
 #proof{border-top:1px solid var(--line)}
@@ -508,7 +516,13 @@ footer{
     flex:1;display:flex;align-items:center;justify-content:center;
     font-size:1.05rem;letter-spacing:.1em;font-weight:400;
   }
-  .mb-book{background:var(--bone);color:var(--black);gap:.85rem;letter-spacing:normal}
+  .mb-wa{background:var(--bone);color:var(--black);gap:.85rem;letter-spacing:normal}
+  .mobile-bar .mb-call{
+    flex:0 0 74px;flex-direction:column;gap:.15rem;
+    background:var(--black);color:var(--bone);font-size:.8rem;letter-spacing:.04em;
+    border-inline-start:1px solid var(--line);
+  }
+  .mb-call .ic-phone{width:22px;height:22px}
   .mb-ic{width:40px;height:40px;border-radius:50%;background:var(--black);color:var(--bone);display:grid;place-items:center;flex:none}
   .mb-ic svg{width:20px;height:20px}
   .mb-text{display:flex;flex-direction:column;line-height:1.25}
@@ -519,7 +533,7 @@ footer{
   .grain{animation:none}
   .reveal{transition:none;opacity:1;transform:none}
   .hint-bar{animation:none}
-  .nav-cta .ic-phone,.mb-ic svg{animation:none}
+  .nav-cta .ic-wa,.mb-ic svg{animation:none}
   /* degrade pinned/scrubbed sections to the static mobile layout */
   .hero-mask{height:auto}
   .scrub-section{height:auto}

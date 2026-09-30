@@ -12,7 +12,7 @@
 .skip-link:focus{transform:none}
 :focus-visible{outline:3px solid var(--bone);outline-offset:3px}
 .inverted :focus-visible{outline-color:var(--black)}
-.mb-book:focus-visible,.a11y-opt[aria-pressed="true"]:focus-visible{outline:3px solid var(--black);outline-offset:-6px}
+.mb-wa:focus-visible,.a11y-opt[aria-pressed="true"]:focus-visible{outline:3px solid var(--black);outline-offset:-6px}
 /* gallery: invisible full-size button over each photo (js/main.js) */
 .gitem-open{position:absolute;inset:0;width:100%;height:100%;z-index:2;background:none;border:none;padding:0;cursor:pointer}
 .gitem-open:focus-visible{outline-offset:-4px}
@@ -126,7 +126,7 @@ html.a11y-contrast .gitem img{filter:none}
 
 /* highlight links */
 html.a11y-links a:not(.skip-link){text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:.25em}
-html.a11y-links a.btn,html.a11y-links a.nav-cta,html.a11y-links a.mb-book,
+html.a11y-links a.btn,html.a11y-links a.nav-cta,html.a11y-links a.mb-wa,html.a11y-links a.mb-call,
 html.a11y-links a.menu-cta{outline:2px dashed currentColor;outline-offset:3px}
 
 /* readable font: plain sans everywhere, no wide tracking */
