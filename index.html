@@ -42,24 +42,55 @@
     "addressCountry": "IL"
   },
   "geo": { "@type": "GeoCoordinates", "latitude": 31.9611, "longitude": 34.8030 },
-  "hasMap": "https://www.google.com/maps/search/liz+vampire+tattoo+rishon+lezion",
+  "hasMap": "https://www.google.com/maps/place/?q=place_id:ChIJhfVWRzm0AhUR0ZRQSdZyE3c",
   "areaServed": { "@type": "City", "name": "ראשון לציון" },
-  "openingHoursSpecification": {
-    "@type": "OpeningHoursSpecification",
-    "dayOfWeek": ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday"],
-    "opens": "11:00",
-    "closes": "21:00"
+  "openingHoursSpecification": [
+    { "@type": "OpeningHoursSpecification", "dayOfWeek": ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday"], "opens": "11:00", "closes": "20:00" },
+    { "@type": "OpeningHoursSpecification", "dayOfWeek": "Friday", "opens": "11:00", "closes": "16:00" }
+  ],
+  "contactPoint": [
+    { "@type": "ContactPoint", "contactType": "customer service", "name": "WhatsApp", "telephone": "+972-54-226-4377", "url": "https://wa.me/972542264377", "availableLanguage": "he" },
+    { "@type": "ContactPoint", "contactType": "customer service", "name": "טלפון", "telephone": "+972-3-950-3487", "availableLanguage": "he" }
+  ],
+  "hasOfferCatalog": {
+    "@type": "OfferCatalog",
+    "name": "שירותי הסטודיו",
+    "itemListElement": [
+      { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "קעקועי ריאליזם" } },
+      { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "קעקועי שחור-לבן" } },
+      { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "קעקועי צבע" } },
+      { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "תיקון וכיסוי קעקועים" } },
+      { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "פירסינג" } },
+      { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "ייעוץ חינם לפני קעקוע" } }
+    ]
   },
   "sameAs": [
     "https://www.instagram.com/liz_vampire_tattoo_1",
-    "https://www.instagram.com/dr_i_n_k_"
+    "https://www.instagram.com/dr_i_n_k_",
+    "https://www.google.com/maps/place/?q=place_id:ChIJhfVWRzm0AhUR0ZRQSdZyE3c"
   ],
   "priceRange": "₪₪"
 }
 </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    { "@type": "Question", "name": "כמה זה כואב?", "acceptedAnswer": { "@type": "Answer", "text": "פחות ממה שמספרים. תלוי באזור ובגודל — ורוב האנשים מופתעים לטובה. אזורים רגישים יותר? נגיד לכם מראש, בכנות." } },
+    { "@type": "Question", "name": "כמה עולה קעקוע?", "acceptedAnswer": { "@type": "Answer", "text": "המחיר נקבע לפי הגודל, המיקום והסגנון. שלחו תמונה או רעיון בוואטסאפ, או התקשרו — ונגיד לכם כמה זה יעלה. בייעוץ (שהוא חינם) סוגרים מחיר מדויק לפני שמתחילים." } },
+    { "@type": "Question", "name": "אפשר לתקן או לכסות קעקוע ישן?", "acceptedAnswer": { "@type": "Answer", "text": "כן — עושים תיקונים וכיסויים לקעקועים ישנים. שלחו תמונה של הקעקוע בוואטסאפ, ונגיד לכם מה אפשר לעשות." } },
+    { "@type": "Question", "name": "מגיל כמה מקעקעים?", "acceptedAnswer": { "@type": "Answer", "text": "מגיל 18. מתחת לזה — רק עם אישור הורה חתום, ורק אחרי שיחה." } },
+    { "@type": "Question", "name": "איך מטפלים בקעקוע אחרי?", "acceptedAnswer": { "@type": "Answer", "text": "יוצאים מכאן עם הנחיות מלאות, ואנחנו זמינים לכל שאלה עד שהקעקוע מחלים לגמרי. ריפוי נכון — זה חצי מהקעקוע." } },
+    { "@type": "Question", "name": "מה עם היגיינה?", "acceptedAnswer": { "@type": "Answer", "text": "מחטים חד־פעמיות, ציוד סטרילי, ועמדה שמחוטאת בין לקוח ללקוח. שלושים שנה בלי פשרות על זה." } }
+  ]
+}
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Suez+One&family=Metamorphous&family=Assistant:wght@200;300;400;600;700&display=swap" rel="stylesheet">
+<!-- fonts load without blocking the first paint (text shows in a fallback face, then swaps) -->
+<link id="fontcss" rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Suez+One&family=Metamorphous&family=Assistant:wght@200;300;400;600;700&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Suez+One&family=Metamorphous&family=Assistant:wght@200;300;400;600;700&display=swap"></noscript>
 <link rel="stylesheet" href="css/lenis.css">
 <link rel="stylesheet" href="css/main.css">
 <link rel="stylesheet" href="css/common.css">
@@ -116,17 +147,18 @@
   <div class="pin">
     <video aria-hidden="true" class="hero-video" muted loop playsinline autoplay preload="none"></video>
     <script>
-      // choose the hero film before any bytes move: phones get the 1 MB SD cut + a small poster
+      // choose the hero film before any bytes move: phones get only the small poster still (no film download)
       (function (v) {
         var small = window.matchMedia('(max-width:820px)').matches;
         v.poster = small ? 'assets/img/hero-poster-m.jpg' : 'assets/img/hero-poster.jpg';
-        v.preload = small ? 'metadata' : 'auto';
+        if (small) return;
+        v.preload = 'auto';
         // start the film right after the first contentful paint so it never competes with it (the poster covers the gap)
         var started = false;
         function start() {
           if (started) return;
           started = true;
-          v.src = small ? 'assets/video/hero_sd.mp4' : 'assets/video/hero_hd.mp4';
+          v.src = 'assets/video/hero_hd.mp4';
         }
         try {
           new PerformanceObserver(function (list) {
@@ -139,14 +171,21 @@
     <div class="vignette" aria-hidden="true"></div>
     <canvas class="mask-canvas" aria-hidden="true"></canvas>
 
-    <h1 class="sr-only">ליז ואמפייר טאטו (Liz Vampire Tattoo) — סטודיו לקעקועים בראשון לציון</h1>
-
-    <!-- mobile-only solid title (no mask zoom on touch) -->
+    <!-- solid title for the static (reduced-motion) layout -->
     <div class="hero-copy-mobile">
       <p class="display hero-title-m">LIZ VAMPIRE TATTOO</p>
     </div>
 
-    <p class="hero-sub stage" data-from="0" data-to="0.22">ראשון לציון. מאז 1996.</p>
+    <div class="hero-sub stage" data-from="0" data-to="0.22">
+      <h1 class="hero-h1">סטודיו לקעקועים בראשון לציון</h1>
+      <p class="hero-meta">מאז 1996 · הרצל 91</p>
+      <a class="hero-thumbs" href="#gallery">
+        <img src="assets/img/work/xs/w05.jpg" alt="" width="240" height="320" loading="lazy" decoding="async">
+        <img src="assets/img/work/xs/w06.jpg" alt="" width="240" height="320" loading="lazy" decoding="async">
+        <img src="assets/img/work/xs/w18.jpg" alt="" width="240" height="320" loading="lazy" decoding="async">
+        <span class="hero-thumbs-label">לגלריית העבודות ←</span>
+      </a>
+    </div>
 
     <p class="stage stage-line" data-from="0.8" data-to="1">כשזה לנצח —<br>הולכים למי שכבר הוכיח.</p>
 
@@ -162,8 +201,24 @@
   <video aria-hidden="true" class="bg-video" muted loop playsinline preload="none" data-src="assets/video/studio.mp4"></video>
   <div class="video-shade" aria-hidden="true"></div>
   <div class="section-inner story-inner">
-    <h2 class="display reveal">היינו כאן לפני<br>שזה היה מגניב.</h2>
+    <h2 class="kicker reveal">מקעקעים בראשון לציון מאז 1996</h2>
+    <p class="display story-title reveal">היינו כאן לפני<br>שזה היה מגניב.</p>
     <p class="reveal story-p">ב־1996 קעקוע היה הצהרה. ליז פתחה סטודיו בראשון<br>והפכה אותו למקצוע. שלושים שנה אחרי —<br>הסטנדרט עוד נקבע כאן.</p>
+  </div>
+</section>
+
+<!-- ============ PRICE + HOW TO BOOK ============ -->
+<section id="price">
+  <div class="section-inner price-inner">
+    <h2 class="kicker reveal">כמה עולה קעקוע · איך קובעים תור</h2>
+    <p class="display price-lead reveal">המחיר נקבע לפי הגודל,<br>המיקום והסגנון.</p>
+    <p class="price-p reveal">שלחו תמונה או רעיון <a href="https://wa.me/972542264377?text=%D7%94%D7%99%D7%99%2C%20%D7%94%D7%92%D7%A2%D7%AA%D7%99%20%D7%9E%D7%94%D7%90%D7%AA%D7%A8%20%D7%95%D7%90%D7%A9%D7%9E%D7%97%20%D7%9C%D7%A4%D7%A8%D7%98%D7%99%D7%9D%20%D7%A2%D7%9C%20%D7%A7%D7%A2%D7%A7%D7%95%D7%A2" target="_blank" rel="noopener">בוואטסאפ<span class="sr-only"> (נפתח בוואטסאפ)</span></a>, או <a href="tel:039503487">התקשרו</a> — ונגיד לכם כמה זה יעלה. הייעוץ חינם.</p>
+    <ol class="price-steps reveal">
+      <li><span class="step-n" aria-hidden="true">1</span><strong>שולחים רעיון</strong><span>תמונה, סקיצה או כמה מילים — בוואטסאפ או בטלפון.</span></li>
+      <li><span class="step-n" aria-hidden="true">2</span><strong>ייעוץ חינם</strong><span>מדייקים יחד את העיצוב ואת המחיר, בלי התחייבות.</span></li>
+      <li><span class="step-n" aria-hidden="true">3</span><strong>קובעים תור</strong><span>ומתחילים לעבוד, בסטודיו בהרצל 91.</span></li>
+    </ol>
+    <a class="price-gallery reveal" href="#gallery">לראות עבודות מהסטודיו ←</a>
   </div>
 </section>
 
@@ -173,7 +228,7 @@
     <canvas class="scrub-canvas" aria-hidden="true"></canvas>
     <video aria-hidden="true" class="scrub-fallback" muted loop playsinline preload="none" data-src="assets/video/line.mp4"></video>
     <div class="vignette" aria-hidden="true"></div>
-    <h2 class="display stage stage-line" data-from="0.05" data-to="0.45">ככה נראה ניסיון.</h2>
+    <p class="display stage stage-line" data-from="0.05" data-to="0.45">ככה נראה ניסיון.</p>
     <p class="stage stage-line" data-from="0.55" data-to="0.95">לא בתעודות ולא בקירות —<br>בקו אחד רציף, ביד אחת שקטה.</p>
   </div>
 </section>
@@ -181,7 +236,7 @@
 <!-- ============ ARTISTS ============ -->
 <section id="artists">
   <div class="section-inner">
-    <p class="kicker reveal">האמנים</p>
+    <h2 class="kicker reveal">האמנים · ליז ורותם, שני דורות של מקעקעים</h2>
     <div class="artists-grid">
       <article class="artist reveal">
         <span class="artist-num" aria-hidden="true">1996</span>
@@ -206,7 +261,7 @@
   <video aria-hidden="true" class="bg-video" muted loop playsinline preload="none" data-src="assets/video/reveal.mp4"></video>
   <div class="video-shade" aria-hidden="true"></div>
   <div class="section-inner">
-    <p class="kicker reveal">הסגנונות</p>
+    <h2 class="kicker reveal">סגנונות קעקוע</h2>
     <p class="styles-lede reveal">לא עובדים מקטלוג. כל עבודה נבנית עליכם — מהסקיצה ועד המחט.</p>
     <ul class="styles-list">
       <li class="display reveal" data-style="realism">ריאליזם</li>
@@ -222,7 +277,7 @@
 <!-- ============ GALLERY ============ -->
 <section id="gallery">
   <div class="section-inner">
-    <p class="kicker reveal">העבודות</p>
+    <h2 class="kicker reveal">גלריית קעקועים · ריאליזם, שחור-לבן וצבע</h2>
     <p class="gallery-note reveal">מבחר קטן מתוך אלפי קעקועים שנעשו כאן לאורך השנים.</p>
     <p class="gallery-hint reveal">עברו עם העכבר — הצבע חוזר לרגע.</p>
     <div class="gallery-filters reveal" role="group" aria-label="סינון עבודות לפי סגנון">
@@ -231,7 +286,7 @@
       <button class="gf" data-filter="myth" aria-pressed="false">מיתולוגיה</button>
       <button class="gf" data-filter="color" aria-pressed="false">צבע</button>
     </div>
-    <div class="gallery-grid">
+    <div class="gallery-grid" id="galleryGrid">
       <figure class="gitem reveal" data-style="realism"><img src="assets/img/work/w01.jpg" srcset="assets/img/work/sm/w01.jpg 600w, assets/img/work/w01.jpg 900w" sizes="(max-width:820px) 46vw, 23vw" alt="קעקוע — לוחם סמוראי" loading="lazy"><figcaption>לוחם סמוראי</figcaption></figure>
       <figure class="gitem reveal" data-style="myth"><img src="assets/img/work/w02.jpg" srcset="assets/img/work/sm/w02.jpg 600w, assets/img/work/w02.jpg 900w" sizes="(max-width:820px) 46vw, 23vw" alt="קעקוע — דוד" loading="lazy"><figcaption>דוד</figcaption></figure>
       <figure class="gitem reveal" data-style="myth"><img src="assets/img/work/w03.jpg" srcset="assets/img/work/sm/w03.jpg 600w, assets/img/work/w03.jpg 900w" sizes="(max-width:820px) 46vw, 23vw" alt="קעקוע — אלת הצייד" loading="lazy"><figcaption>אלת הצייד</figcaption></figure>
@@ -273,6 +328,7 @@
       <figure class="gitem reveal" data-style="realism"><img src="assets/img/work/w39.jpg" srcset="assets/img/work/sm/w39.jpg 600w, assets/img/work/w39.jpg 900w" sizes="(max-width:820px) 46vw, 23vw" alt="קעקוע — כלי נשיפה" loading="lazy"><figcaption>כלי נשיפה</figcaption></figure>
       <figure class="gitem reveal" data-style="myth"><img src="assets/img/work/w40.jpg" srcset="assets/img/work/sm/w40.jpg 600w, assets/img/work/w40.jpg 900w" sizes="(max-width:820px) 46vw, 23vw" alt="קעקוע — פוסידון והסערה" loading="lazy"><figcaption>פוסידון והסערה</figcaption></figure>
     </div>
+    <button type="button" class="gallery-more" aria-controls="galleryGrid" hidden>לכל 40 העבודות</button>
   </div>
 </section>
 
@@ -281,8 +337,8 @@
   <div class="pin strip-pin">
     <div class="strip-track" tabindex="0" role="region" aria-label="תמונות מהסטודיו">
       <div class="strip-lead">
-        <p class="kicker">הסטודיו</p>
-        <h2 class="display">שחור, לבן, ונקי.</h2>
+        <h2 class="kicker">הסטודיו בהרצל 91, ראשון לציון</h2>
+        <p class="display strip-title">שחור, לבן, ונקי.</p>
         <p class="strip-lede">בלי פילטרים. ככה זה נראה באמת.</p>
       </div>
       <figure class="sframe"><img src="assets/img/studio/s1.jpg" alt="כיסא הקעקועים תחת הסופטבוקס" loading="lazy"><figcaption>01 · הכיסא</figcaption></figure>
@@ -296,8 +352,8 @@
 <!-- ============ CONSULTATION ============ -->
 <section id="consult">
   <div class="section-inner consult-inner">
-    <h2 class="display reveal">ייעוץ חינם.<br>בלי התחייבות.</h2>
-    <p class="reveal">מגיעים עם רעיון, שאלה, או כלום.<br>יוצאים עם תוכנית.</p>
+    <h2 class="display reveal">ייעוץ חינם<br>לפני הקעקוע.</h2>
+    <p class="reveal">בלי התחייבות. מגיעים עם רעיון, שאלה, או כלום.<br>יוצאים עם תוכנית.</p>
   </div>
 </section>
 
@@ -312,7 +368,7 @@
       <path fill="#ece7dd" d="M76 1l2.7 5.8 6.3.7-4.7 4.3 1.3 6.2L76 15l-5.6 3 1.3-6.2-4.7-4.3 6.3-.7z"/>
       <path fill="url(#halfStar)" d="M98 1l2.7 5.8 6.3.7-4.7 4.3 1.3 6.2L98 15l-5.6 3 1.3-6.2-4.7-4.3 6.3-.7z"/>
     </svg>
-    <p class="proof-score reveal"><strong>4.6</strong> · 244 ביקורות בגוגל</p>
+    <h2 class="proof-score reveal"><strong>4.6</strong> כוכבים ב־244 ביקורות בגוגל</h2>
     <p class="proof-line reveal">שלושים שנה של מוניטין. לא רק אצלנו — גם בגוגל.</p>
     <a class="proof-link reveal" href="https://www.google.com/maps/search/liz+vampire+tattoo+rishon+lezion" target="_blank" rel="noopener">לכל הביקורות ←<span class="sr-only"> (נפתח בחלון חדש)</span></a>
   </div>
@@ -321,14 +377,20 @@
 <!-- ============ FAQ ============ -->
 <section id="faq">
   <div class="section-inner faq-inner">
-    <p class="kicker reveal">שאלות שכולם שואלים</p>
+    <h2 class="kicker reveal">שאלות נפוצות על קעקועים</h2>
     <details class="faq-item reveal">
       <summary>כמה זה כואב?</summary>
       <p>פחות ממה שמספרים. תלוי באזור ובגודל — ורוב האנשים מופתעים לטובה. אזורים רגישים יותר? נגיד לכם מראש, בכנות.</p>
     </details>
     <details class="faq-item reveal">
-      <summary>כמה זה עולה?</summary>
-      <p>לפי גודל, מיקום ומורכבות. בייעוץ (שהוא חינם) סוגרים מחיר מדויק — לפני שנוגעים בעור, בלי הפתעות.</p>
+      <summary>כמה עולה קעקוע?</summary>
+      <p>המחיר נקבע לפי הגודל, המיקום והסגנון. שלחו תמונה או רעיון בוואטסאפ, או התקשרו — ונגיד לכם כמה זה יעלה. בייעוץ (שהוא חינם) סוגרים מחיר מדויק לפני שמתחילים.</p>
+      <a class="faq-more" href="/prices/">עוד על מחירי קעקועים ←</a>
+    </details>
+    <details class="faq-item reveal">
+      <summary>אפשר לתקן או לכסות קעקוע ישן?</summary>
+      <p>כן — עושים תיקונים וכיסויים לקעקועים ישנים. שלחו תמונה של הקעקוע בוואטסאפ, ונגיד לכם מה אפשר לעשות.</p>
+      <a class="faq-more" href="/cover-up/">כיסוי ותיקון קעקועים ←</a>
     </details>
     <details class="faq-item reveal">
       <summary>מגיל כמה מקעקעים?</summary>
@@ -337,6 +399,7 @@
     <details class="faq-item reveal">
       <summary>איך מטפלים בקעקוע אחרי?</summary>
       <p>יוצאים מכאן עם הנחיות מלאות, ואנחנו זמינים לכל שאלה עד שהקעקוע מחלים לגמרי. ריפוי נכון — זה חצי מהקעקוע.</p>
+      <a class="faq-more" href="/aftercare/">הוראות טיפול בקעקוע ←</a>
     </details>
     <details class="faq-item reveal">
       <summary>מה עם היגיינה?</summary>
@@ -348,10 +411,11 @@
 <!-- ============ BOOKING ============ -->
 <section id="booking">
   <div class="section-inner booking-inner">
+    <h2 class="kicker reveal">קביעת תור לקעקוע</h2>
     <p class="booking-intro reveal">שולחים הודעה, מספרים מה בא לכם — ומתאמים תור.</p>
     <a class="btn btn-solid btn-call reveal" href="https://wa.me/972542264377?text=%D7%94%D7%99%D7%99%2C%20%D7%94%D7%92%D7%A2%D7%AA%D7%99%20%D7%9E%D7%94%D7%90%D7%AA%D7%A8%20%D7%95%D7%90%D7%A9%D7%9E%D7%97%20%D7%9C%D7%A4%D7%A8%D7%98%D7%99%D7%9D%20%D7%A2%D7%9C%20%D7%A7%D7%A2%D7%A7%D7%95%D7%A2" target="_blank" rel="noopener"><svg class="ic-wa" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg><span>שלחו וואטסאפ</span><span class="sr-only"> (נפתח בוואטסאפ)</span></a>
     <p class="booking-alt reveal">או התקשרו: <a href="tel:039503487" dir="ltr">03-9503487</a></p>
-    <p class="cta-trust reveal">ייעוץ חינם · א׳–ה׳ <span dir="ltr">11:00–21:00</span></p>
+    <p class="cta-trust reveal">ייעוץ חינם · א׳–ה׳ <span dir="ltr">11:00–20:00</span> · ו׳ <span dir="ltr">11:00–16:00</span></p>
   </div>
 </section>
 
@@ -367,10 +431,10 @@
 <section id="contact">
   <div class="section-inner contact-grid">
     <div class="contact-info">
-      <p class="kicker reveal">צרו קשר</p>
+      <h2 class="kicker reveal">צרו קשר</h2>
       <address class="reveal">
         <p class="contact-big display">הרצל 91,<br>ראשון לציון</p>
-        <p>א׳–ה׳ · <span dir="ltr">11:00–21:00</span></p>
+        <p>א׳–ה׳ · <span dir="ltr">11:00–20:00</span><br>ו׳ · <span dir="ltr">11:00–16:00</span></p>
         <p><a href="tel:039503487">03-9503487</a></p>
         <p><a href="https://wa.me/972542264377?text=%D7%94%D7%99%D7%99%2C%20%D7%94%D7%92%D7%A2%D7%AA%D7%99%20%D7%9E%D7%94%D7%90%D7%AA%D7%A8%20%D7%95%D7%90%D7%A9%D7%9E%D7%97%20%D7%9C%D7%A4%D7%A8%D7%98%D7%99%D7%9D%20%D7%A2%D7%9C%20%D7%A7%D7%A2%D7%A7%D7%95%D7%A2" target="_blank" rel="noopener">וואטסאפ · <span dir="ltr">054-226-4377</span><span class="sr-only"> (נפתח בוואטסאפ)</span></a></p>
         <p><a href="https://www.instagram.com/liz_vampire_tattoo_1" target="_blank" rel="noopener">@liz_vampire_tattoo_1<span class="sr-only"> (נפתח בחלון חדש)</span></a></p>
@@ -386,6 +450,7 @@
 
 <footer>
   <p><span class="foot-mark">LIZ VAMPIRE TATTOO</span> · הרצל 91, ראשון לציון · מאז 1996</p>
+  <p class="foot-links foot-services"><span>שירותים:</span> <a href="/realism/">קעקועי ריאליזם</a> · <a href="/black-and-white/">שחור-לבן</a> · <a href="/color/">קעקועים צבעוניים</a> · <a href="/cover-up/">כיסוי ותיקון</a> · <a href="/prices/">מחירים</a> · <a href="/aftercare/">טיפול בקעקוע</a> · <a href="/piercing/">פירסינג</a></p>
   <p class="foot-links"><a href="accessibility.html">הצהרת נגישות</a> · <a href="privacy.html">מדיניות פרטיות</a> · <a href="terms.html">תנאי שימוש</a></p>
 </footer>
 

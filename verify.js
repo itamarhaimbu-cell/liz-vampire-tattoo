@@ -271,7 +271,7 @@ function check(name, ok, detail) {
   }));
   check('WhatsApp is the main CTA: nav + menu open wa.me (prefilled, new tab), menu keeps a call link',
     callState.navCta.startsWith(WA_PREFIX) && callState.menuCta.startsWith(WA_PREFIX) && callState.menuCall === 'tel:039503487' &&
-    callState.waLinks.length === 5 && callState.waLinks.every(w => w.href.startsWith(WA_PREFIX) && w.href.length > WA_PREFIX.length && w.target === '_blank' && /noopener/.test(w.rel)),
+    callState.waLinks.length === 6 && callState.waLinks.every(w => w.href.startsWith(WA_PREFIX) && w.href.length > WA_PREFIX.length && w.target === '_blank' && /noopener/.test(w.rel)),
     JSON.stringify({ nav: callState.navCta.slice(0, 40), menuCall: callState.menuCall, wa: callState.waLinks.length }));
 
   // booking: WhatsApp button first, phone number right under it, no form
@@ -314,8 +314,16 @@ function check(name, ok, detail) {
       h1: document.querySelector('h1').textContent,
       ld: ld && { type: ld['@type'], url: ld.url, logo: ld.logo, founding: ld.foundingDate,
         noRating: !ld.aggregateRating, noPostal: !ld.address.postalCode,
-        noPiercing: !/פירסינג/.test(JSON.stringify(ld)), noAcademy: !/academy/i.test(JSON.stringify(ld.sameAs)),
-        geo: ld.geo && [ld.geo.latitude, ld.geo.longitude] },
+        piercing: /פירסינג/.test(JSON.stringify(ld.hasOfferCatalog || {})), coverUp: /כיסוי/.test(JSON.stringify(ld.hasOfferCatalog || {})),
+        noAcademy: !/academy/i.test(JSON.stringify(ld.sameAs)),
+        geo: ld.geo && [ld.geo.latitude, ld.geo.longitude],
+        hours: (ld.openingHoursSpecification || []).map(h => [[].concat(h.dayOfWeek).join(','), h.opens, h.closes].join(' ')),
+        whatsapp: (ld.contactPoint || []).some(c => c.telephone === '+972-54-226-4377' && /wa\.me\/972542264377/.test(c.url || '')),
+        maps: ld.hasMap === 'https://www.google.com/maps/place/?q=place_id:ChIJhfVWRzm0AhUR0ZRQSdZyE3c' && (ld.sameAs || []).includes(ld.hasMap) },
+      faqLd: (() => { try { return [...document.querySelectorAll('script[type="application/ld+json"]')].map(s => JSON.parse(s.textContent)).find(j => j['@type'] === 'FAQPage') || null; } catch (e) { return null; } })(),
+      faqVisible: [...document.querySelectorAll('#faq details')].map(d => ({ q: d.querySelector('summary').textContent.trim(), a: d.querySelector('p').textContent.trim() })),
+      h1s: [...document.querySelectorAll('h1')].map(h => { const r = h.getBoundingClientRect(); return { t: h.textContent.trim(), w: r.width, h: r.height }; }),
+      hoursText: document.body.innerText.match(/\d\d:\d\d–\d\d:\d\d/g) || [],
       poster: document.querySelector('.hero-video').getAttribute('poster'),
     };
   });
@@ -328,24 +336,42 @@ function check(name, ok, detail) {
   check('social preview: og url/site/image 1200w/twitter description + hero poster',
     seo.ogUrl === 'https://lizvampiretattoo.com/' && seo.ogImage === 'https://lizvampiretattoo.com/assets/img/og.jpg' &&
     seo.ogW === '1200' && !!seo.ogSite && !!seo.twDesc && posterOk, JSON.stringify({ ogUrl: seo.ogUrl, ogW: seo.ogW, posterOk }));
-  check('business info for Google: TattooParlor, url/logo/1996, no rating/postal/piercing/academy',
+  check('business info for Google: TattooParlor, url/logo/1996, no rating/postal/academy; offers piercing + cover-ups (since 2026-10-01)',
     seo.ld && seo.ld.type === 'TattooParlor' && seo.ld.url === 'https://lizvampiretattoo.com/' && logoOk && seo.ld.founding === '1996' &&
-    seo.ld.noRating && seo.ld.noPostal && seo.ld.noPiercing && seo.ld.noAcademy && seo.ld.geo[0] === 31.9611,
+    seo.ld.noRating && seo.ld.noPostal && seo.ld.piercing && seo.ld.coverUp && seo.ld.noAcademy && seo.ld.geo[0] === 31.9611,
     JSON.stringify(seo.ld));
+  check('business info: hours Sun–Thu 11:00–20:00 + Fri 11:00–16:00, WhatsApp contact point, Google Maps place link',
+    seo.ld && seo.ld.hours.length === 2 && seo.ld.hours.includes('Sunday,Monday,Tuesday,Wednesday,Thursday 11:00 20:00') && seo.ld.hours.includes('Friday 11:00 16:00') && seo.ld.whatsapp && seo.ld.maps,
+    JSON.stringify({ hours: seo.ld && seo.ld.hours, whatsapp: seo.ld && seo.ld.whatsapp, maps: seo.ld && seo.ld.maps }));
+  check('visible hours everywhere: Sun–Thu 11:00–20:00 and Fri 11:00–16:00 (nothing else)',
+    seo.hoursText.filter(h => h === '11:00–20:00').length >= 2 && seo.hoursText.filter(h => h === '11:00–16:00').length >= 2 &&
+    seo.hoursText.every(h => h === '11:00–20:00' || h === '11:00–16:00'), JSON.stringify(seo.hoursText));
+  check('FAQPage structured data mirrors the visible FAQ (same questions + answers)',
+    !!seo.faqLd && seo.faqLd.mainEntity.length === seo.faqVisible.length &&
+    seo.faqLd.mainEntity.every((q, i) => q.name === seo.faqVisible[i].q && q.acceptedAnswer.text === seo.faqVisible[i].a),
+    JSON.stringify({ ld: seo.faqLd && seo.faqLd.mainEntity.length, visible: seo.faqVisible.length }));
+  check('exactly one H1, visible, says קעקועים בראשון לציון (desktop)',
+    seo.h1s.length === 1 && seo.h1s[0].w > 100 && seo.h1s[0].h > 10 && /קעקועים/.test(seo.h1s[0].t) && /ראשון לציון/.test(seo.h1s[0].t),
+    JSON.stringify(seo.h1s));
   const crawl = await page.evaluate(async () => {
     const r = await fetch('/robots.txt'); const rt = await r.text();
     const sm = await fetch('/sitemap.xml'); const st = await sm.text();
+    const pages = ['', 'realism/', 'black-and-white/', 'color/', 'cover-up/', 'prices/', 'aftercare/', 'piercing/', 'accessibility.html', 'privacy.html', 'terms.html'];
+    const locs = (st.match(/<loc>/g) || []).length;
+    const served = {};
+    for (const u of pages) served[u || '/'] = (await fetch('/' + u)).status;
     return { robots: r.ok && /Sitemap: https:\/\/lizvampiretattoo\.com\/sitemap\.xml/.test(rt),
-      sitemap: sm.ok && ['', 'accessibility.html', 'privacy.html', 'terms.html'].every(u => st.includes('<loc>https://lizvampiretattoo.com/' + u + '</loc>')) };
+      sitemap: sm.ok && locs === pages.length && pages.every(u => st.includes('<loc>https://lizvampiretattoo.com/' + u + '</loc>')),
+      allServed: Object.values(served).every(s => s === 200), served };
   });
-  check('robots.txt points to sitemap.xml; sitemap lists all 4 pages', crawl.robots && crawl.sitemap, JSON.stringify(crawl));
+  check('robots.txt points to sitemap.xml; sitemap lists all 11 pages, each one served', crawl.robots && crawl.sitemap && crawl.allServed, JSON.stringify(crawl));
 
   // FAQ accordion
   const faqCount = await page.evaluate(() => document.querySelectorAll('#faq details').length);
   await page.click('#faq details:first-of-type summary');
   await new Promise(r => setTimeout(r, 300));
   const faqOpen = await page.evaluate(() => document.querySelector('#faq details').open);
-  check('FAQ: 5 items, accordion opens', faqCount === 5 && faqOpen, `items=${faqCount} open=${faqOpen}`);
+  check('FAQ: 6 items (incl. cover-ups), accordion opens', faqCount === 6 && faqOpen, `items=${faqCount} open=${faqOpen}`);
 
   // conversion tracking: EVERY tel: CTA records call_click (the Google Ads conversion).
   // click each one with navigation blocked, count call_click events vs links.
@@ -361,7 +387,7 @@ function check(name, ok, detail) {
     return { links: links.length, fired: after - before, adsConversions: conv };
   });
   check('every call CTA fires call_click',
-    callTrack.links === 4 && callTrack.fired === callTrack.links && callTrack.adsConversions === callTrack.links,
+    callTrack.links === 5 && callTrack.fired === callTrack.links && callTrack.adsConversions === callTrack.links,
     JSON.stringify(callTrack));
 
   const waTrack = await page.evaluate(() => {
@@ -381,7 +407,7 @@ function check(name, ok, detail) {
     return { links: links.length, exactlyOne: per.every(p => p.ev === 1 && p.cv === 1 && p.call === 0), per };
   });
   check('every WhatsApp link fires exactly one whatsapp_click → AW-18472197461/DzqeCJjpyYsdENW6nehE',
-    waTrack.links === 5 && waTrack.exactlyOne, JSON.stringify({ links: waTrack.links, exactlyOne: waTrack.exactlyOne }));
+    waTrack.links === 6 && waTrack.exactlyOne, JSON.stringify({ links: waTrack.links, exactlyOne: waTrack.exactlyOne }));
 
   // academy strip
   const academy = await page.evaluate(() => {
@@ -470,11 +496,11 @@ function check(name, ok, detail) {
     return {
       maskShown: getComputedStyle(c).display !== 'none',
       cornerAlpha: corner[3], holes,
-      playing: !v.paused && v.readyState > 2, videoWidth: v.videoWidth,
+      film: v.currentSrc, poster: v.getAttribute('poster'),
     };
   });
-  check('mobile: ink-mask hero active (portrait stencil + SD film)',
-    mHero.maskShown && mHero.cornerAlpha > 240 && mHero.holes > 20 && mHero.playing && mHero.videoWidth === 960,
+  check('mobile: ink-mask hero active (portrait stencil over the poster still, no film)',
+    mHero.maskShown && mHero.cornerAlpha > 240 && mHero.holes > 20 && mHero.film === '' && /hero-poster-m\.jpg$/.test(mHero.poster),
     JSON.stringify(mHero));
 
   async function mScrollHeroP(p) {
@@ -514,6 +540,21 @@ function check(name, ok, detail) {
   check('mobile: studio swipe carousel + sticky bar',
     mobStrip.swipeable && mobStrip.transform === 'none' && mobStrip.bar === 'flex',
     JSON.stringify(mobStrip));
+  const gal0 = await mp.evaluate(() => ({
+    shown: [...document.querySelectorAll('.gitem')].filter(g => g.getBoundingClientRect().height > 0).length,
+    total: document.querySelectorAll('.gitem').length,
+    btn: !document.querySelector('.gallery-more').hidden,
+  }));
+  await mp.evaluate(() => { const b = document.querySelector('.gallery-more'); b.scrollIntoView({ block: 'center' }); });
+  await new Promise(r => setTimeout(r, 300));
+  await mp.tap('.gallery-more');
+  await new Promise(r => setTimeout(r, 400));
+  const gal1 = await mp.evaluate(() => ({
+    shown: [...document.querySelectorAll('.gitem')].filter(g => g.getBoundingClientRect().height > 0).length,
+    btnHidden: document.querySelector('.gallery-more').hidden,
+  }));
+  check('mobile: gallery opens with 12 works + one "show all" button that reveals all 40',
+    gal0.shown === 12 && gal0.total === 40 && gal0.btn && gal1.shown === 40 && gal1.btnHidden, JSON.stringify({ gal0, gal1 }));
   check('mobile: no page errors', mpErrors.length === 0, mpErrors.slice(0, 3).join(' | '));
 
   /* ================= ACCESSIBILITY (IS 5568 / WCAG 2.0 AA) ================= */
@@ -686,10 +727,24 @@ function check(name, ok, detail) {
     });
     await pp.goto(URL, { waitUntil: 'networkidle2', timeout: 60000 });
     await new Promise(r => setTimeout(r, 1500));
-    const film = await pp.evaluate(() => { const v = document.querySelector('.hero-video'); return { src: v.currentSrc, poster: v.poster, videoWidth: v.videoWidth }; });
-    const hdRequested = reqs.some(u => u.includes('hero_hd.mp4'));
-    check('phone: hero plays the 1 MB SD film + small poster, never requests the 6.4 MB HD film',
-      /hero_sd\.mp4$/.test(film.src) && /hero-poster-m\.jpg$/.test(film.poster) && !hdRequested, JSON.stringify({ film, hdRequested }));
+    const film = await pp.evaluate(async () => { const v = document.querySelector('.hero-video'); return { src: v.currentSrc, poster: v.poster, posterOk: (await fetch(v.poster)).ok }; });
+    const filmRequested = reqs.filter(u => /hero_(sd|hd)\.mp4/.test(u));
+    check('phone: hero shows the small poster still and downloads NO hero film',
+      film.src === '' && /hero-poster-m\.jpg$/.test(film.poster) && film.posterOk && filmRequested.length === 0, JSON.stringify({ film, filmRequested }));
+    // first screen: the visible H1 + 3 real works sit above the sticky bar (and above the cookie strip on a first visit)
+    const first = await pp.evaluate(() => {
+      const bar = document.querySelector('.mobile-bar').getBoundingClientRect();
+      const note = document.querySelector('.cookie-note');
+      const floor = note ? note.getBoundingClientRect().top : bar.top;
+      const h1 = document.querySelector('h1'), hr = h1.getBoundingClientRect();
+      const imgs = [...document.querySelectorAll('.hero-thumbs img')].map(i => { const r = i.getBoundingClientRect(); return { w: Math.round(r.width), top: Math.round(r.top), bottom: Math.round(r.bottom), loaded: i.complete && i.naturalWidth > 0 }; });
+      const link = document.querySelector('.hero-thumbs').getAttribute('href');
+      return { h1: h1.textContent.trim(), h1Top: Math.round(hr.top), h1Visible: hr.width > 100 && hr.bottom <= floor && parseFloat(getComputedStyle(h1.closest('.hero-sub')).opacity) > 0.9,
+        imgs, floor: Math.round(floor), link, cookieOpen: !!note };
+    });
+    check('phone first screen: visible H1 "סטודיו לקעקועים בראשון לציון" + 3 work thumbnails above the sticky bar, linking to the gallery',
+      /קעקועים/.test(first.h1) && first.h1Visible && first.imgs.length === 3 && first.imgs.every(i => i.loaded && i.w >= 60 && i.top >= 0 && i.bottom <= first.floor) && first.link === '#gallery',
+      JSON.stringify(first));
     const earlyFilms = reqs.filter(u => /(studio|reveal|line)\.mp4/.test(u));
     check('phone: below-the-fold films are not downloaded at page load', earlyFilms.length === 0, earlyFilms.join(' | '));
     check('phone: call bar is tappable from the first frame (above the loading screen)', barAtDCL && barAtDCL.tappable, JSON.stringify(barAtDCL));

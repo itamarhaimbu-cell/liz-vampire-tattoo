@@ -29,6 +29,8 @@
     root.classList.toggle('a11y-font', !!prefs.font);
   }
   apply();
+  // first visit: reserve the cookie strip's room before the first paint (no layout shift when it appears)
+  if (!load(COOKIE_KEY)) root.classList.add('cookie-open');
 
   /* "stop animations" (or the OS reduce-motion setting): no looping video — WCAG 2.2.2 */
   var stillVideo = prefs.still || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -165,9 +167,11 @@
     n.innerHTML = '<p>האתר משתמש בעוגיות של Google כדי למדוד ביקורים ולשפר את הפרסום. ' +
       '<a href="/privacy.html">מדיניות פרטיות</a></p><button type="button">הבנתי</button>';
     document.body.appendChild(n);
+    root.classList.add('cookie-open'); // the home hero lifts its bottom block clear of the strip
     n.querySelector('button').addEventListener('click', function () {
       store(COOKIE_KEY, '1');
       n.remove();
+      root.classList.remove('cookie-open');
     });
   }
 

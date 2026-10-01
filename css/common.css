@@ -101,7 +101,8 @@
 .a11y-statement{font-size:.95rem;color:var(--bone);border-bottom:1px solid var(--bone-dim);padding-bottom:.1rem}
 
 @media (max-width:820px){
-  .a11y-tab{width:48px;padding:.6rem 0 .5rem;top:46%}
+  /* phones: tuck the tab under the top bar so it never sits on the hero title */
+  .a11y-tab{width:48px;padding:.6rem 0 .5rem;top:calc(84px + env(safe-area-inset-top));transform:none}
   .a11y-tab svg{width:24px;height:24px}
   .a11y-tab-label{font-size:.7rem}
 }
@@ -176,7 +177,15 @@ html.a11y-still .styles-list li{background-position:100% 0}
   font-family:var(--sans);font-weight:700;font-size:.95rem;padding:.6rem 1rem;min-height:44px;
 }
 @media (max-width:820px){
-  .cookie-note{left:.6rem;right:.6rem;width:auto;bottom:calc(68px + env(safe-area-inset-bottom) + .6rem)}
+  /* phones: a thin full-width strip resting on the sticky contact bar */
+  .cookie-note{
+    left:0;right:0;width:auto;bottom:calc(68px + env(safe-area-inset-bottom));
+    border-radius:0;border-left:none;border-right:none;border-bottom:none;box-shadow:none;
+    padding:.3rem .8rem;gap:.7rem;font-size:.78rem;line-height:1.4;background:rgba(10,10,10,.96);
+  }
+  .cookie-note button{font-size:.88rem;padding:.35rem .9rem;min-height:44px}
+  .cookie-note a,.foot-links a{position:relative}
+  .cookie-note a::after,.foot-links a::after{content:"";position:absolute;inset:-12px -4px}
 }
 
 /* ---------- footer policy links ---------- */

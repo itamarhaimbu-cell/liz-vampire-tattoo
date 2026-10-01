@@ -83,6 +83,7 @@ img{max-width:100%;display:block}
 #menuBtn{
   display:none;background:none;border:none;cursor:pointer;padding:.7rem .4rem;
   flex-direction:column;gap:7px;
+  min-width:48px;min-height:48px;align-items:center;justify-content:center;
 }
 #menuBtn span{display:block;width:26px;height:2px;background:var(--bone)}
 
@@ -134,11 +135,20 @@ img{max-width:100%;display:block}
 .hero-copy-mobile{display:none}
 .hero-title-m{font-family:"Metamorphous",serif;font-size:clamp(2rem,10.5vw,3.2rem);line-height:1.25;text-shadow:0 4px 60px rgba(0,0,0,.85)}
 .hero-sub{
-  position:absolute;bottom:15vh;right:50%;transform:translateX(50%);z-index:3;
-  font-size:clamp(1.05rem,1.8vw,1.4rem);letter-spacing:.14em;
-  color:var(--bone);font-weight:300;white-space:nowrap;
+  position:absolute;bottom:17vh;right:50%;transform:translateX(50%);z-index:3;
+  text-align:center;color:var(--bone);
   text-shadow:0 1px 8px rgba(0,0,0,.95),0 2px 30px rgba(0,0,0,.9);
 }
+/* the page's one H1: what this is, in Hebrew, on the first screen */
+.hero-h1{
+  font-family:var(--serif);font-weight:400;white-space:nowrap;
+  font-size:clamp(1.3rem,2.3vw,1.95rem);line-height:1.25;letter-spacing:.01em;
+}
+.hero-meta{
+  margin-top:.4rem;font-size:clamp(.95rem,1.4vw,1.15rem);letter-spacing:.14em;
+  color:var(--bone-dim);font-weight:300;white-space:nowrap;
+}
+.hero-thumbs{display:none}
 #hero .scroll-hint{z-index:3}
 
 /* ---------- scrub / pinned sections ---------- */
@@ -182,8 +192,9 @@ section{position:relative}
 }
 .kicker{
   font-size:1.05rem;letter-spacing:.18em;color:var(--bone-dim);
-  margin-bottom:2.5rem;font-weight:400;
+  margin-bottom:2.5rem;font-weight:400;line-height:1.6;
 }
+h2.kicker{font-family:var(--sans)}
 .reveal{opacity:0;transform:translateY(36px);transition:opacity 1s ease,transform 1s ease}
 .reveal.visible{opacity:1;transform:none}
 
@@ -197,7 +208,7 @@ section{position:relative}
 .video-section .section-inner{position:relative;z-index:2;min-height:100vh;display:flex;flex-direction:column;justify-content:center}
 
 /* story */
-.story-inner h2{font-size:clamp(3rem,8vw,6.4rem)}
+.story-inner .story-title{font-size:clamp(3rem,8vw,6.4rem)}
 .story-p{margin-top:2.6rem;font-size:clamp(1.15rem,1.9vw,1.5rem);color:var(--bone-dim);font-weight:300;line-height:1.9}
 
 /* ---------- artists ---------- */
@@ -258,6 +269,14 @@ section{position:relative}
 .gallery-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem}
 .gitem{position:relative;overflow:hidden;cursor:pointer;aspect-ratio:3/4;background:var(--ink)}
 .gitem.hide{display:none}
+.gallery-more{
+  display:block;margin:2rem auto 0;min-height:48px;
+  background:none;border:1px solid var(--bone-dim);color:var(--bone);border-radius:999px;
+  font-family:var(--sans);font-weight:400;font-size:1rem;padding:.7rem 1.8rem;cursor:pointer;
+}
+.gallery-more[hidden]{display:none}
+@media (min-width:821px){.gallery-more{display:none}}
+.gallery-more:hover{border-color:var(--bone)}
 .gitem img{
   width:100%;height:100%;object-fit:cover;
   filter:grayscale(1) contrast(1.05);
@@ -286,7 +305,7 @@ section{position:relative}
 }
 .strip-lead{flex:none;width:min(34vw,480px)}
 .strip-lead .kicker{margin-bottom:1.6rem}
-.strip-lead h2{font-size:clamp(2.2rem,4.2vw,3.8rem)}
+.strip-lead .strip-title{font-size:clamp(2.2rem,4.2vw,3.8rem)}
 .strip-lede{margin-top:1.4rem;color:var(--bone-dim);font-size:clamp(1.05rem,1.6vw,1.3rem)}
 .sframe{
   flex:none;margin:0;
@@ -301,6 +320,25 @@ section{position:relative}
   margin-top:.8rem;font-size:.95rem;letter-spacing:.12em;
   color:var(--bone-dim);font-weight:400;
 }
+
+/* ---------- price + how to book ---------- */
+#price{border-top:1px solid var(--line)}
+.price-inner{max-width:980px}
+.price-lead{font-size:clamp(2rem,4.4vw,3.4rem)}
+.price-p{margin-top:1.4rem;max-width:52ch;color:var(--bone-dim);font-size:clamp(1.1rem,1.8vw,1.35rem);line-height:1.9}
+.price-p a{color:var(--bone);border-bottom:1px solid var(--bone-dim);padding-bottom:.05rem}
+.price-p a:hover{border-color:var(--bone)}
+.price-steps{list-style:none;margin-top:2.6rem;display:grid;grid-template-columns:repeat(3,1fr);gap:1.2rem}
+.price-steps li{border:1px solid var(--line);padding:1.5rem 1.4rem;display:flex;flex-direction:column;gap:.35rem}
+.step-n{font-family:var(--serif);font-size:1.7rem;line-height:1;color:var(--bone-dim)}
+.price-steps strong{font-family:var(--serif);font-weight:400;font-size:1.35rem;color:var(--bone)}
+.price-steps li span:last-child{color:var(--bone-dim);font-size:1.02rem;line-height:1.7}
+.price-gallery{
+  display:inline-block;margin-top:2.2rem;font-size:1.05rem;letter-spacing:.06em;
+  color:var(--bone-dim);border-bottom:1px solid var(--line);padding:.6rem 0 .15rem;
+  transition:color .3s,border-color .3s;
+}
+.price-gallery:hover{color:var(--bone);border-color:var(--bone)}
 
 /* ---------- consult ---------- */
 #consult{border-top:1px solid var(--line)}
@@ -341,7 +379,7 @@ section{position:relative}
 #proof{border-top:1px solid var(--line)}
 .proof-inner{text-align:center;padding-top:clamp(4rem,9vh,6rem);padding-bottom:clamp(4rem,9vh,6rem)}
 .stars{width:150px;height:28px;margin:0 auto 1.2rem;display:block}
-.proof-score{font-family:var(--serif);font-size:clamp(1.6rem,3vw,2.2rem)}
+.proof-score{font-family:var(--serif);font-weight:400;font-size:clamp(1.6rem,3vw,2.2rem)}
 .proof-score strong{font-weight:400}
 .proof-line{margin-top:.8rem;color:var(--bone-dim);font-size:1.1rem}
 .proof-link{
@@ -374,7 +412,6 @@ section{position:relative}
 /* ---------- booking ---------- */
 #booking{border-top:1px solid var(--line)}
 .booking-inner{text-align:center}
-.booking-inner h2{font-size:clamp(2.2rem,5.5vw,3.9rem);margin-bottom:1.4rem}
 .booking-intro{color:var(--bone-dim);font-size:clamp(1.1rem,1.8vw,1.4rem);line-height:1.9;margin:0 0 2.8rem}
 
 /* ---------- academy (the one inversion) ---------- */
@@ -448,7 +485,7 @@ footer{
 @media (min-width:821px) and (max-height:820px){
   .section-inner{padding-top:clamp(3rem,8vh,5.5rem);padding-bottom:clamp(3rem,8vh,5.5rem)}
   .kicker{margin-bottom:1.8rem}
-  .story-inner h2{font-size:clamp(2.6rem,9vh,4.8rem)}
+  .story-inner .story-title{font-size:clamp(2.6rem,9vh,4.8rem)}
   .story-p{margin-top:1.8rem;font-size:clamp(1.1rem,2.4vh,1.35rem)}
   .consult-inner h2{font-size:clamp(2.6rem,9.2vh,5rem)}
   .consult-inner p{margin:1.5rem 0 2rem}
@@ -457,9 +494,8 @@ footer{
   .artist h3{font-size:clamp(2.4rem,7vh,3.9rem)}
   .artist{padding:2.6rem 2.2rem}
   .artist-num{font-size:5.4rem;top:-1rem}
-  .booking-inner h2{font-size:clamp(2rem,6.5vh,3.4rem);margin-bottom:2rem}
   /* pinned beats resolve a touch sooner so the cinematic sequence isn't a marathon on a laptop */
-  .strip-lead h2{font-size:clamp(2rem,5.2vh,3.2rem)}
+  .strip-lead .strip-title{font-size:clamp(2rem,5.2vh,3.2rem)}
 }
 
 /* ============ MOBILE — full 3D stays on; layout adapts ============ */
@@ -469,12 +505,37 @@ footer{
   #menuBtn{display:flex}
 
   /* pinned 3D sections: shorter travel for thumbs, svh against the URL bar */
-  .hero-mask{height:250vh}
-  .scrub-section{height:220vh}
+  .hero-mask{height:185vh}
+  .scrub-section{height:160vh}
   .pin{height:100svh}
-  .hero-sub{bottom:22vh;font-size:1rem}
-  #hero .scroll-hint{bottom:calc(80px + env(safe-area-inset-bottom))}
+  .video-section .section-inner{min-height:82svh}
+  /* first screen: H1 + address line + 3 real works, above the sticky bar */
+  .hero-sub{bottom:calc(68px + env(safe-area-inset-bottom) + 1rem);width:100%;padding:0 1rem}
+  html.cookie-open .hero-sub{bottom:calc(68px + env(safe-area-inset-bottom) + 3.9rem)}
+  .hero-h1{font-size:clamp(1.15rem,5.7vw,1.6rem)}
+  .hero-meta{font-size:.95rem;margin-top:.2rem}
+  .hero-thumbs{
+    display:grid;grid-template-columns:repeat(3,auto);justify-content:center;gap:.5rem;
+    margin-top:.8rem;text-shadow:none;
+  }
+  .hero-thumbs img{
+    width:min(23vw,12svh,96px);aspect-ratio:1;height:auto;object-fit:cover;
+    border:1px solid var(--line);filter:grayscale(1) contrast(1.05);
+  }
+  .hero-thumbs-label{
+    grid-column:1/-1;font-size:.9rem;letter-spacing:.06em;color:var(--bone-dim);
+    text-shadow:0 1px 8px rgba(0,0,0,.95);padding-top:.1rem;
+  }
+  #hero .scroll-hint{display:none}
   .hint-bar{height:34px}
+  .gallery-grid.collapsed .gitem:nth-child(n+13){display:none}
+  .price-steps{grid-template-columns:1fr;gap:.7rem;margin-top:2rem}
+  .price-steps li{padding:1.1rem 1.2rem}
+  /* thumb-sized tap areas: inline text links get an invisible 44px hit area (layout unchanged) */
+  .price-p a,.booking-alt a,address a,.artist-ig,.proof-link,.price-gallery{position:relative}
+  .price-p a::after,.booking-alt a::after,address a::after{content:"";position:absolute;inset:-10px -4px}
+  .artist-ig::after,.proof-link::after,.price-gallery::after{content:"";position:absolute;inset:-7px -4px}
+  .gf{min-height:44px}
   .stage-line{width:94%;font-size:clamp(1.5rem,6.5vw,2.4rem);padding:1.8rem .6rem}
 
   /* let Hebrew wrap naturally on narrow screens */
@@ -502,7 +563,6 @@ footer{
   .contact-grid{grid-template-columns:1fr}
   .academy-inner{flex-direction:column;text-align:center}
   .consult-inner h2{font-size:clamp(2.4rem,11vw,3.4rem)}
-  .booking-inner h2{font-size:clamp(1.7rem,7.5vw,2.4rem)}
   .proof-score{font-size:1.5rem}
   .btn-call{font-size:1rem;padding:.85rem 1.3rem;gap:.55rem;letter-spacing:.02em}
   body{padding-bottom:calc(68px + env(safe-area-inset-bottom))}
@@ -528,6 +588,16 @@ footer{
   .mb-text{display:flex;flex-direction:column;line-height:1.25}
   .mb-main{font-weight:700;font-size:1.15rem}
   .mb-sub{font-size:.85rem;opacity:.72}
+}
+/* short phones (iPhone SE class): smaller thumbnails, no label, so the block clears the TATTOO line */
+@media (max-width:820px) and (max-height:740px){
+  .hero-sub{bottom:calc(68px + env(safe-area-inset-bottom) + .6rem)}
+  html.cookie-open .hero-sub{bottom:calc(68px + env(safe-area-inset-bottom) + 3.6rem)}
+  .hero-h1{font-size:clamp(1.1rem,5.4vw,1.4rem)}
+  .hero-meta{font-size:.88rem;margin-top:0}
+  .hero-thumbs{margin-top:.55rem;gap:.4rem}
+  .hero-thumbs img{width:min(19vw,10svh,80px)}
+  .hero-thumbs-label{display:none}
 }
 @media (prefers-reduced-motion:reduce){
   .grain{animation:none}
@@ -556,3 +626,8 @@ footer{
   }
   .strip-track::-webkit-scrollbar{display:none}
 }
+
+/* links from FAQ answers to the service pages */
+.faq-item .faq-more{display:inline-block;margin:.2rem 0 .6rem;font-size:.95rem;color:var(--bone);text-decoration:underline;text-underline-offset:.25em;position:relative}
+.faq-item .faq-more::after{content:"";position:absolute;inset:-12px -4px}
+.foot-services{line-height:2}

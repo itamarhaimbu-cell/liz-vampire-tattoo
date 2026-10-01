@@ -191,9 +191,21 @@
     var fontsReady = false;
     var lastScale = -1, lastFade = -1;
 
-    document.fonts.load('10px "Metamorphous"').then(function () {
-      return document.fonts.ready;
-    }).then(function () { fontsReady = true; lastScale = -1; });
+    // the font stylesheet loads without blocking paint: draw once Metamorphous is in, redraw once
+    // if a fallback face had to be used first, and never leave the hero blank past 3s
+    var haveFace = false;
+    function checkTitleFont() {
+      if (haveFace) return;
+      document.fonts.load('10px "Metamorphous"').then(function (f) {
+        if (f && f.length && !haveFace) { haveFace = true; fontsReady = true; lastScale = -1; }
+      }).catch(function () {});
+    }
+    checkTitleFont();
+    var fontCss = document.getElementById('fontcss'); // async stylesheet: the face may not be declared yet
+    if (fontCss) fontCss.addEventListener('load', checkTitleFont);
+    if (document.fonts.addEventListener) document.fonts.addEventListener('loadingdone', checkTitleFont);
+    setTimeout(function () { if (!fontsReady) { fontsReady = true; lastScale = -1; } }, 3000);
+    var blanked = false;
 
     function resize() {
       // Supersample the mask: the letters are punched into a raster canvas, so on
@@ -288,6 +300,11 @@
       var scale = 1 + Math.pow(pz, 2.4) * (MAX_SCALE - 1);
       // stencil fully dissolved before the pin releases
       var fade = p < 0.70 ? 1 : clamp01(1 - (p - 0.70) / 0.18);
+      if (!fontsReady && !blanked) { // until the title face is in: solid black, not the bare film
+        blanked = true;
+        ctx.fillStyle = '#060606';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
       if (fontsReady && (scale !== lastScale || fade !== lastFade)) {
         if (fade === 0) {
           ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -357,7 +374,7 @@
         var pr = v.play();
         if (pr && pr.catch) pr.catch(function () {});
       });
-    }, { rootMargin: '100% 0px' });
+    }, { rootMargin: '60% 0px' }); // start ~half a screen ahead; the shorter phone hero must not pull the story film into page load
     lazyVids.forEach(function (v) { vio.observe(v); });
   }
 
@@ -427,8 +444,28 @@
   /* ---------- gallery filter ---------- */
   var filterBtns = document.querySelectorAll('.gf');
   var items = document.querySelectorAll('.gitem');
+
+  /* phones: show the first 12 works, the rest behind one button (keeps the page short) */
+  var galleryGrid = document.querySelector('.gallery-grid');
+  var moreBtn = document.querySelector('.gallery-more');
+  function expandGallery() {
+    galleryGrid.classList.remove('collapsed');
+    if (moreBtn) moreBtn.hidden = true;
+  }
+  if (isSmall && moreBtn && items.length > 12) {
+    galleryGrid.classList.add('collapsed');
+    moreBtn.hidden = false;
+    moreBtn.addEventListener('click', function () {
+      expandGallery();
+      var next = items[12].querySelector('.gitem-open');
+      if (next) next.focus({ preventScroll: true });
+      track('gallery_more');
+    });
+  }
+
   filterBtns.forEach(function (btn) {
     btn.addEventListener('click', function () {
+      expandGallery();
       filterBtns.forEach(function (b) { b.classList.remove('active'); b.setAttribute('aria-pressed', 'false'); });
       btn.classList.add('active');
       btn.setAttribute('aria-pressed', 'true');
