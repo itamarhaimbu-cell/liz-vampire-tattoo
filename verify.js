@@ -16,6 +16,7 @@ function check(name, ok, detail) {
   require('fs').mkdirSync(path.join(__dirname, 'verify-shots'), { recursive: true });
   const browser = await puppeteer.launch({ executablePath: EDGE, headless: 'new', args: ['--no-sandbox'] });
   const GOOGLE_HIT = /google-analytics\.com\/(g\/)?collect|\/pagead\/(1p-conversion|1p-user-list|viewthroughconversion|conversion)|\/rmkt\/collect|\/ccm\/collect|doubleclick\.net\/pagead/;
+  const ADS_CONVERSION = /[?&]label=([^&]+)/; // every Ads conversion hit carries its conversion label
   browser.on('targetcreated', async (t) => {
     if (t.type() !== 'page') return;
     const pg = await t.page();
@@ -23,10 +24,39 @@ function check(name, ok, detail) {
     await pg.setRequestInterception(true).catch(() => {});
     pg.on('request', (r) => {
       if (r.isInterceptResolutionHandled()) return;
-      if (GOOGLE_HIT.test(r.url())) r.respond({ status: 204, body: '' }).catch(() => {});
+      if (GOOGLE_HIT.test(r.url())) {
+        const m = ADS_CONVERSION.exec(r.url());
+        if (m) (pg.__adsLabels = pg.__adsLabels || []).push(m[1]); // which conversion label left the page
+        r.respond({ status: 204, body: '' }).catch(() => {});
+      }
       else r.continue().catch(() => {});
     });
   });
+
+  // ---- pin the studio clock ----
+  // js/common.js picks "call first" or "WhatsApp first" from the studio's opening hours (Israel time) and reads
+  // window.__studioNow when it is set. Every page in this suite starts CLOSED (Tue 23:00) unless a check opens it,
+  // so the result never depends on when the suite runs. Instants are UTC; Israel is UTC+3 until 25 Oct 2026, UTC+2 after.
+  const CLOCK = {
+    tueNoon: Date.UTC(2026, 9, 6, 9, 0),        // Tue 12:00 summer time  -> open
+    tueNight: Date.UTC(2026, 9, 6, 20, 0),      // Tue 23:00              -> closed
+    satNoon: Date.UTC(2026, 9, 10, 9, 0),       // Sat 12:00              -> closed
+    fri15: Date.UTC(2026, 9, 9, 12, 0),         // Fri 15:00              -> open
+    fri17: Date.UTC(2026, 9, 9, 14, 0),         // Fri 17:00              -> closed
+    winter1130: Date.UTC(2026, 11, 1, 9, 30),   // Tue 11:30 winter time  -> open  (a fixed +3 offset would say 12:30)
+    winter1030: Date.UTC(2026, 11, 1, 8, 30),   // Tue 10:30 winter time  -> closed (a fixed +3 offset would say 11:30 = open)
+  };
+  const CLOCK_EXPECT = { tueNoon: 'open', tueNight: 'closed', satNoon: 'closed', fri15: 'open', fri17: 'closed', winter1130: 'open', winter1030: 'closed' };
+  const pinClock = async (pg, ms) => { await pg.evaluateOnNewDocument(`window.__studioNow = ${ms};`); return pg; };
+  const _newPage = browser.newPage.bind(browser);
+  browser.newPage = async () => pinClock(await _newPage(), CLOCK.tueNight);
+  const _newContext = browser.createBrowserContext.bind(browser);
+  browser.createBrowserContext = async (...args) => {
+    const ctx = await _newContext(...args);
+    const ctxNewPage = ctx.newPage.bind(ctx);
+    ctx.newPage = async () => pinClock(await ctxNewPage(), CLOCK.tueNight);
+    return ctx;
+  };
 
   /* ================= DESKTOP ================= */
   const page = await browser.newPage();
@@ -271,20 +301,22 @@ function check(name, ok, detail) {
   }));
   check('WhatsApp is the main CTA: nav + menu open wa.me (prefilled, new tab), menu keeps a call link',
     callState.navCta.startsWith(WA_PREFIX) && callState.menuCta.startsWith(WA_PREFIX) && callState.menuCall === 'tel:039503487' &&
-    callState.waLinks.length === 6 && callState.waLinks.every(w => w.href.startsWith(WA_PREFIX) && w.href.length > WA_PREFIX.length && w.target === '_blank' && /noopener/.test(w.rel)),
+    callState.waLinks.length === 7 && callState.waLinks.every(w => w.href.startsWith(WA_PREFIX) && w.href.length > WA_PREFIX.length && w.target === '_blank' && /noopener/.test(w.rel)),
     JSON.stringify({ nav: callState.navCta.slice(0, 40), menuCall: callState.menuCall, wa: callState.waLinks.length }));
 
-  // booking: WhatsApp button first, phone number right under it, no form
+  // booking: closed = WhatsApp button + phone number under it; open = call button + WhatsApp under it (both pairs in the HTML); no form
   const bookingUi = await page.evaluate(() => {
     const b = document.querySelector('#booking');
     return {
       intro: !!b.querySelector('.booking-intro'),
-      waBtn: !!b.querySelector('a.btn[href*="wa.me/972542264377"]'),
-      callAlt: (b.querySelector('.booking-alt a[href^="tel:"]') || { getAttribute: () => null }).getAttribute('href'),
+      waBtn: !!b.querySelector('a.btn.when-closed[href*="wa.me/972542264377"]'),
+      callBtn: !!b.querySelector('a.btn.when-open[href="tel:039503487"]'),
+      waAlt: !!b.querySelector('.booking-alt.when-open a[href*="wa.me/972542264377"]'),
+      callAlt: (b.querySelector('.booking-alt.when-closed a[href^="tel:"]') || { getAttribute: () => null }).getAttribute('href'),
       noForm: !b.querySelector('form'),
     };
   });
-  check('booking: WhatsApp button + call alternative (no form)', bookingUi.intro && bookingUi.waBtn && bookingUi.callAlt === 'tel:039503487' && bookingUi.noForm, JSON.stringify(bookingUi));
+  check('booking: WhatsApp button + call alternative, and the call button + WhatsApp alternative for opening hours (no form)', bookingUi.intro && bookingUi.waBtn && bookingUi.callAlt === 'tel:039503487' && bookingUi.callBtn && bookingUi.waAlt && bookingUi.noForm, JSON.stringify(bookingUi));
 
   // social proof strip
   const proof = await page.evaluate(() => {
@@ -387,7 +419,7 @@ function check(name, ok, detail) {
     return { links: links.length, fired: after - before, adsConversions: conv };
   });
   check('every call CTA fires call_click',
-    callTrack.links === 5 && callTrack.fired === callTrack.links && callTrack.adsConversions === callTrack.links,
+    callTrack.links === 6 && callTrack.fired === callTrack.links && callTrack.adsConversions === callTrack.links,
     JSON.stringify(callTrack));
 
   const waTrack = await page.evaluate(() => {
@@ -407,7 +439,7 @@ function check(name, ok, detail) {
     return { links: links.length, exactlyOne: per.every(p => p.ev === 1 && p.cv === 1 && p.call === 0), per };
   });
   check('every WhatsApp link fires exactly one whatsapp_click → AW-18472197461/DzqeCJjpyYsdENW6nehE',
-    waTrack.links === 6 && waTrack.exactlyOne, JSON.stringify({ links: waTrack.links, exactlyOne: waTrack.exactlyOne }));
+    waTrack.links === 7 && waTrack.exactlyOne, JSON.stringify({ links: waTrack.links, exactlyOne: waTrack.exactlyOne }));
 
   // academy strip
   const academy = await page.evaluate(() => {
@@ -490,7 +522,8 @@ function check(name, ok, detail) {
     const v = document.querySelector('.hero-video');
     const ctx = c.getContext('2d');
     const corner = ctx.getImageData(4, 4, 1, 1).data;
-    const row = ctx.getImageData(0, Math.round(c.height * 0.44), c.width, 1).data; // VAMPIRE glyph body
+    const vamp = document.querySelectorAll('.hero-title-m span')[1].getBoundingClientRect(), cr = c.getBoundingClientRect();
+    const row = ctx.getImageData(0, Math.round((vamp.top + vamp.height / 2 - cr.top) * c.height / cr.height), c.width, 1).data; // VAMPIRE glyph body
     let holes = 0;
     for (let x = 3; x < row.length; x += 4) if (row[x] < 20) holes++;
     return {
@@ -710,6 +743,199 @@ function check(name, ok, detail) {
   await mm.browserContext().close();
 
 
+  /* ================= HOURS-AWARE CTA (call first while open, WhatsApp first when closed) ================= */
+  {
+    const WA_LABEL = 'DzqeCJjpyYsdENW6nehE', CALL_LABEL = 'JLzeCKmD4IMdENW6nehE';
+    const PHONE = { width: 390, height: 844, isMobile: true, hasTouch: true, deviceScaleFactor: 2 };
+
+    // the class on <html> for each pinned instant (same page, clock moved + re-checked)
+    const clk = await freshPage(DESK);
+    await clk.goto(URL, { waitUntil: 'domcontentloaded' });
+    const classes = await clk.evaluate((CLOCK) => {
+      const out = {};
+      for (const k in CLOCK) {
+        window.__studioNow = CLOCK[k]; window.__studioRefresh();
+        const c = document.documentElement.classList;
+        out[k] = c.contains('studio-open') && !c.contains('studio-closed') ? 'open' : c.contains('studio-closed') && !c.contains('studio-open') ? 'closed' : 'neither';
+      }
+      return out;
+    }, CLOCK);
+    check('hours: <html> is studio-open Sun–Thu 11–20 + Fri 11–16 Israel time, studio-closed otherwise (Tue 12:00, Tue 23:00, Sat 12:00, Fri 15:00, Fri 17:00, winter-time offsets)',
+      Object.keys(CLOCK_EXPECT).every(k => classes[k] === CLOCK_EXPECT[k]), JSON.stringify(classes));
+    await clk.browserContext().close();
+
+    // one real tap on a link; returns what it fired (site events + the Ads conversion request that left the page)
+    async function tap(pg, sel) {
+      const count = () => pg.evaluate(() => {
+        const sent = (label) => (window.dataLayer || []).filter(d => d[0] === 'event' && d[1] === 'conversion' && d[2] && d[2].send_to === 'AW-18472197461/' + label).length;
+        return { wa: (window.__events || []).filter(e => e.name === 'whatsapp_click').length, call: (window.__events || []).filter(e => e.name === 'call_click').length,
+          cvWa: sent('DzqeCJjpyYsdENW6nehE'), cvCall: sent('JLzeCKmD4IMdENW6nehE') };
+      });
+      const before = await count();
+      const n0 = (pg.__adsLabels || []).length;
+      const geo = await pg.evaluate(async (sel) => {
+        const a = document.querySelector(sel);
+        if (!a) return { missing: true };
+        if (getComputedStyle(a.closest('.mobile-bar') || a).position !== 'fixed') {
+          window.scrollTo(0, a.getBoundingClientRect().top + scrollY - innerHeight / 2);
+          await new Promise(r => setTimeout(r, 1400)); // scroll-reveal fade
+        }
+        const r = a.getBoundingClientRect();
+        const hit = r.width ? document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2) : null;
+        return { w: Math.round(r.width), h: Math.round(r.height), x: Math.round(r.left), shown: r.width > 0 && r.height > 0 && +getComputedStyle(a).opacity > 0.9,
+          uncovered: !!hit && (hit === a || a.contains(hit)), href: a.getAttribute('href'), text: a.innerText.replace(/\s+/g, ' ').trim(), name: a.getAttribute('aria-label') };
+      }, sel);
+      if (geo.missing || !geo.shown || !geo.uncovered) return { geo, fired: null };
+      await (await pg.$(sel)).click();
+      for (let i = 0; i < 40 && (pg.__adsLabels || []).length === n0; i++) await wait(100);
+      await wait(500); // a duplicate would arrive right behind the first
+      const after = await count();
+      // ads = the distinct conversion labels on the requests that left the page after the tap (answered locally with 204)
+      return { geo, fired: { wa: after.wa - before.wa, call: after.call - before.call, cvWa: after.cvWa - before.cvWa, cvCall: after.cvCall - before.cvCall, ads: [...new Set((pg.__adsLabels || []).slice(n0))] } };
+    }
+    const firedOnlyWa = t => !!t.fired && t.fired.wa === 1 && t.fired.call === 0 && t.fired.cvWa === 1 && t.fired.cvCall === 0 && t.fired.ads.length === 1 && t.fired.ads[0] === WA_LABEL;
+    const firedOnlyCall = t => !!t.fired && t.fired.call === 1 && t.fired.wa === 0 && t.fired.cvCall === 1 && t.fired.cvWa === 0 && t.fired.ads.length === 1 && t.fired.ads[0] === CALL_LABEL;
+    const gone = (pg, sel) => pg.evaluate((sel) => [...document.querySelectorAll(sel)].every(e => e.getBoundingClientRect().width === 0), sel);
+
+    const barGeo = {};
+    for (const [state, ms] of [['closed', CLOCK.tueNight], ['closed-sat', CLOCK.satNoon], ['open', CLOCK.tueNoon]]) {
+      const open = state === 'open';
+      const pg = await freshPage(PHONE);
+      await pinClock(pg, ms);
+      // taps must not leave the page (no WhatsApp tab, no dialler); the site's own click listeners still run
+      await pg.evaluateOnNewDocument(() => document.addEventListener('click', e => { if (e.target.closest && e.target.closest('a[href^="tel:"],a[href*="wa.me"]')) e.preventDefault(); }, true));
+      await pg.goto(URL, { waitUntil: 'networkidle2', timeout: 60000 }); await wait(1500);
+      await pg.evaluate(() => { const b = document.querySelector('.cookie-note button'); if (b) b.click(); });
+      await wait(300);
+      const cls = await pg.evaluate(() => document.documentElement.className);
+      const barH = await pg.evaluate(() => Math.round(document.querySelector('.mobile-bar').getBoundingClientRect().height));
+
+      const wide = open ? '.mobile-bar .mb-call' : '.mobile-bar .mb-wa', narrow = open ? '.mobile-bar .mb-wa' : '.mobile-bar .mb-call';
+      const tWide = await tap(pg, wide), tNarrow = await tap(pg, narrow);
+      barGeo[state] = { wide: { x: tWide.geo.x, w: tWide.geo.w, h: tWide.geo.h }, narrow: { x: tNarrow.geo.x, w: tNarrow.geo.w, h: tNarrow.geo.h }, barH };
+      const wideText = open ? /התקשרו לייעוץ חינם.*פתוחים עכשיו/ : /שלחו וואטסאפ לייעוץ חינם.*סגורים עכשיו, נחזור אליכם/;
+      const narrowText = open ? /^וואטסאפ/ : /^חיוג$/;
+      const callName = await pg.evaluate(() => document.querySelector('.mobile-bar .mb-call').getAttribute('aria-label'));
+      check(`phone bar (${state}): ${open ? 'CALL' : 'WHATSAPP'} is the wide button, ${open ? 'WhatsApp' : 'call'} the narrow one — visible, uncovered, ≥44px, bar 68px, labels right`,
+        new RegExp(open ? 'studio-open' : 'studio-closed').test(cls) && barH === 68 &&
+        tWide.geo.shown && tWide.geo.uncovered && tWide.geo.w >= 250 && tWide.geo.h >= 44 && wideText.test(tWide.geo.text) &&
+        tNarrow.geo.shown && tNarrow.geo.uncovered && tNarrow.geo.w >= 44 && tNarrow.geo.w <= 90 && tNarrow.geo.h >= 44 && narrowText.test(tNarrow.geo.text) &&
+        /חיוג לסטודיו: 03-9503487$/.test(callName) && (open ? /^התקשרו לייעוץ חינם/.test(callName) : callName === 'חיוג לסטודיו: 03-9503487'),
+        JSON.stringify({ cls: cls.match(/studio-\w+/g), barH, wide: tWide.geo, narrow: tNarrow.geo, callName }));
+      check(`phone bar (${state}): each button fires exactly its own conversion (one site event, one Ads conversion, only its own label on the wire)`,
+        (open ? firedOnlyCall(tWide) && firedOnlyWa(tNarrow) : firedOnlyWa(tWide) && firedOnlyCall(tNarrow)),
+        JSON.stringify({ wide: tWide.fired, narrow: tNarrow.fired }));
+
+      if (state !== 'closed-sat') {
+        // #booking: the solid button and the text alternative swap; the other pair is display:none (can't be tapped)
+        const main = open ? '#booking a.btn.when-open' : '#booking a.btn.when-closed';
+        const alt = open ? '#booking .booking-alt.when-open a' : '#booking .booking-alt.when-closed a';
+        const hiddenPair = open ? '#booking .when-closed' : '#booking .when-open';
+        const tMain = await tap(pg, main), tAlt = await tap(pg, alt);
+        const hidden = await gone(pg, hiddenPair);
+        check(`booking (${state}): main button = ${open ? '«התקשרו עכשיו» (tel)' : '«שלחו וואטסאפ»'}, second option = ${open ? 'WhatsApp' : 'phone'}; the other pair is not rendered`,
+          tMain.geo.shown && tMain.geo.uncovered && tMain.geo.h >= 44 && (open ? tMain.geo.href === 'tel:039503487' && /התקשרו עכשיו/.test(tMain.geo.text) : /wa\.me\/972542264377/.test(tMain.geo.href) && /שלחו וואטסאפ/.test(tMain.geo.text)) &&
+          tAlt.geo.shown && tAlt.geo.uncovered && (open ? /wa\.me\/972542264377/.test(tAlt.geo.href) : tAlt.geo.href === 'tel:039503487') && hidden,
+          JSON.stringify({ main: tMain.geo, alt: tAlt.geo, hidden }));
+        check(`booking (${state}): both links fire exactly their own conversion`,
+          (open ? firedOnlyCall(tMain) && firedOnlyWa(tAlt) : firedOnlyWa(tMain) && firedOnlyCall(tAlt)),
+          JSON.stringify({ main: tMain.fired, alt: tAlt.fired }));
+      }
+
+      if (open) {
+        const v = await axeViolations(pg);
+        check('a11y: axe WCAG 2.1 AA — 0 violations (mobile, studio open)', v.length === 0, v.join(' | '));
+        // the hours flip without a reload: move the clock to closing time and re-check
+        const flipped = await pg.evaluate((ms) => {
+          window.__studioNow = ms; window.__studioRefresh();
+          const wa = document.querySelector('.mobile-bar .mb-wa').getBoundingClientRect(), call = document.querySelector('.mobile-bar .mb-call');
+          return { cls: document.documentElement.className.match(/studio-\w+/g), waW: Math.round(wa.width), callW: Math.round(call.getBoundingClientRect().width), callName: call.getAttribute('aria-label') };
+        }, CLOCK.tueNight);
+        check('hours flip live (no reload): at closing time WhatsApp becomes the wide button and the call label resets',
+          flipped.cls.length === 1 && flipped.cls[0] === 'studio-closed' && flipped.waW >= 250 && flipped.callW <= 90 && flipped.callName === 'חיוג לסטודיו: 03-9503487', JSON.stringify(flipped));
+      }
+      await pg.browserContext().close();
+    }
+    const same = (a, b) => a.x === b.x && a.w === b.w && a.h === b.h;
+    check('phone bar: identical geometry in both states (wide button right, narrow left, same height — nothing shifts when the hours flip)',
+      same(barGeo.open.wide, barGeo.closed.wide) && same(barGeo.open.narrow, barGeo.closed.narrow) && barGeo.open.barH === barGeo.closed.barH && barGeo.open.wide.x > barGeo.open.narrow.x,
+      JSON.stringify(barGeo));
+
+    // desktop while open: the top-bar pill stays WhatsApp, #booking shows the call button; axe clean
+    const dk = await freshPage(DESK);
+    await pinClock(dk, CLOCK.tueNoon);
+    await dk.goto(URL, { waitUntil: 'networkidle2' }); await wait(1500);
+    const dkState = await dk.evaluate(() => {
+      const shown = s => { const e = document.querySelector(s); return !!e && e.getBoundingClientRect().width > 0; };
+      return { cls: document.documentElement.className.match(/studio-\w+/g), nav: document.querySelector('.nav-cta').getAttribute('href').slice(0, 26),
+        callBtn: shown('#booking a.btn.when-open[href="tel:039503487"]'), waBtn: shown('#booking a.btn.when-closed'), waAlt: shown('#booking .booking-alt.when-open a[href*="wa.me/972542264377"]') };
+    });
+    const dkAxe = await axeViolations(dk);
+    check('desktop (studio open): nav pill stays WhatsApp, #booking leads with the call button, axe 0 violations',
+      dkState.cls[0] === 'studio-open' && dkState.nav === 'https://wa.me/972542264377' && dkState.callBtn && !dkState.waBtn && dkState.waAlt && dkAxe.length === 0,
+      JSON.stringify(dkState) + ' ' + dkAxe.join(' | '));
+    await dk.browserContext().close();
+  }
+
+  /* ================= PHONE FIRST SCREEN: brand title, H1 and address line as one group ================= */
+  {
+    // real-phone sizes, incl. 393x660 = an iPhone 15 Pro with the browser bars showing; each with the cookie strip shown, then dismissed
+    const IPHONE_UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/126.0.0.0 Mobile/15E148 Safari/604.1';
+    const SIZES = [[393, 660], [390, 844], [375, 667], [360, 640], [320, 568]];
+    const measureHero = (pg) => pg.evaluate(() => {
+      const R = (e) => { if (!e) return null; const r = e.getBoundingClientRect(); return { t: r.top, b: r.bottom, l: r.left, r: r.right }; };
+      const q = (s) => document.querySelector(s);
+      // the painted title = the canvas rows/columns that have punched-out (transparent) pixels
+      const c = q('.mask-canvas'), k = c.height / c.getBoundingClientRect().height;
+      const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+      let top = -1, bottom = -1, left = c.width, right = 0;
+      for (let y = 0; y < c.height; y += 2) for (let x = 0; x < c.width; x += 2) if (d[(y * c.width + x) * 4 + 3] < 40) { if (top < 0) top = y; bottom = y; if (x < left) left = x; if (x > right) right = x; }
+      const sub = q('.hero-sub');
+      return { title: { t: top / k, b: bottom / k, l: left / k, r: right / k }, h1: R(q('.hero-h1')), meta: R(q('.hero-meta')), h1Text: q('.hero-h1').textContent.trim(),
+        subOpacity: parseFloat(getComputedStyle(sub).opacity), cookie: R(q('.cookie-note')), bar: R(q('.mobile-bar')), topbar: R(q('.topbar')), tab: R(q('.a11y-tab')),
+        thumbs: document.querySelectorAll('.hero-thumbs, .hero-thumbs-label, #hero img').length,
+        hscroll: document.documentElement.scrollWidth - innerWidth, w: innerWidth };
+    });
+    const hits = (a, b) => !!a && !!b && a.l < b.r && a.r > b.l && a.t < b.b && a.b > b.t;
+    const problems = [], seen = {};
+    for (const [w, h] of SIZES) {
+      const pg = await freshPage({ width: w, height: h, isMobile: true, hasTouch: true, deviceScaleFactor: 2 });
+      await pg.setUserAgent(IPHONE_UA);
+      await pg.goto(URL, { waitUntil: 'networkidle2', timeout: 60000 });
+      await pg.waitForFunction('window.__heroReady === true', { timeout: 20000 });
+      // the title is punched once its face has arrived (a web font, 3s fallback): wait for the letters themselves,
+      // so a slow font download on a cold cache can't decide the result
+      await pg.waitForFunction(() => {
+        const c = document.querySelector('.mask-canvas'), d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+        for (let i = 3; i < d.length; i += 4 * 97) if (d[i] < 40) return true;
+        return false;
+      }, { timeout: 15000, polling: 250 }).catch(() => {});
+      await wait(1000);
+      const shown = await measureHero(pg);
+      await pg.click('.cookie-note button'); await wait(500);
+      const gone = await measureHero(pg);
+      const key = `${w}x${h}`;
+      seen[key] = { gap: Math.round(shown.h1.t - shown.title.b), h1Top: Math.round(shown.h1.t), h1TopAfter: Math.round(gone.h1.t) };
+      for (const [name, m] of [['cookie shown', shown], ['cookie dismissed', gone]]) {
+        const at = `${key} ${name}: `;
+        if (!(m.title.t >= 0 && m.title.b > m.title.t)) problems.push(at + 'title not painted');
+        if (!(m.h1.t - m.title.b >= 8)) problems.push(at + `title and H1 overlap or touch (gap ${Math.round(m.h1.t - m.title.b)}px)`);
+        if (!(m.meta.t >= m.h1.b - 1)) problems.push(at + 'address line not under the H1');
+        if (!(m.subOpacity > 0.9 && m.h1.l >= 0 && m.h1.r <= m.w && m.meta.b <= m.bar.t)) problems.push(at + 'H1/address line not fully visible above the contact bar');
+        for (const box of [m.h1, m.meta]) for (const [what, over] of [['cookie strip', m.cookie], ['contact bar', m.bar], ['top bar', m.topbar], ['accessibility tab', m.tab]]) if (hits(box, over)) problems.push(at + `text covered by the ${what}`);
+        if (hits(m.title, m.tab) || hits(m.title, m.topbar) || hits(m.title, m.cookie) || hits(m.title, m.bar)) problems.push(at + 'title touches a bar or the accessibility tab');
+        if (m.hscroll > 0) problems.push(at + `horizontal overflow ${m.hscroll}px`);
+        if (m.thumbs !== 0) problems.push(at + 'gallery preview still in the hero');
+        if (!/סטודיו לקעקועים בראשון לציון/.test(m.h1Text)) problems.push(at + 'H1 text');
+      }
+      if (!shown.cookie || gone.cookie) problems.push(key + ': cookie strip did not show / dismiss');
+      if (Math.abs(shown.h1.t - gone.h1.t) > 1 || Math.abs(shown.title.t - gone.title.t) > 1) problems.push(key + `: hero text moved when the cookie strip was dismissed (${shown.h1.t} -> ${gone.h1.t})`);
+      await pg.browserContext().close();
+    }
+    check('phone first screen (393x660, 390x844, 375x667, 360x640, 320x568 · cookie strip shown + dismissed): title, H1 and address line never overlap (gap ≥ 8px), nothing covers them, the strip does not move them, no sideways scroll, no gallery preview',
+      problems.length === 0, problems.length ? problems.slice(0, 6).join(' | ') : JSON.stringify(seen));
+  }
+
   /* ================= MOBILE LOAD WEIGHT (Google Ads landing-page experience) ================= */
   {
     const ctx = await browser.createBrowserContext();
@@ -720,9 +946,9 @@ function check(name, ok, detail) {
     let barAtDCL = null;
     pp.on('domcontentloaded', async () => {
       barAtDCL = await pp.evaluate(() => {
-        const a = document.querySelector('.mobile-bar a'); const r = a.getBoundingClientRect();
-        const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
-        return { tappable: !!hit && a.contains(hit), loaderUp: !document.getElementById('loader').classList.contains('done') };
+        const links = [...document.querySelectorAll('.mobile-bar a')];
+        const ok = links.map(a => { const r = a.getBoundingClientRect(); const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return !!hit && a.contains(hit); });
+        return { tappable: links.length === 2 && ok.every(Boolean), loaderUp: !document.getElementById('loader').classList.contains('done') };
       }).catch(e => ({ err: e.message }));
     });
     await pp.goto(URL, { waitUntil: 'networkidle2', timeout: 60000 });
@@ -731,23 +957,9 @@ function check(name, ok, detail) {
     const filmRequested = reqs.filter(u => /hero_(sd|hd)\.mp4/.test(u));
     check('phone: hero shows the small poster still and downloads NO hero film',
       film.src === '' && /hero-poster-m\.jpg$/.test(film.poster) && film.posterOk && filmRequested.length === 0, JSON.stringify({ film, filmRequested }));
-    // first screen: the visible H1 + 3 real works sit above the sticky bar (and above the cookie strip on a first visit)
-    const first = await pp.evaluate(() => {
-      const bar = document.querySelector('.mobile-bar').getBoundingClientRect();
-      const note = document.querySelector('.cookie-note');
-      const floor = note ? note.getBoundingClientRect().top : bar.top;
-      const h1 = document.querySelector('h1'), hr = h1.getBoundingClientRect();
-      const imgs = [...document.querySelectorAll('.hero-thumbs img')].map(i => { const r = i.getBoundingClientRect(); return { w: Math.round(r.width), top: Math.round(r.top), bottom: Math.round(r.bottom), loaded: i.complete && i.naturalWidth > 0 }; });
-      const link = document.querySelector('.hero-thumbs').getAttribute('href');
-      return { h1: h1.textContent.trim(), h1Top: Math.round(hr.top), h1Visible: hr.width > 100 && hr.bottom <= floor && parseFloat(getComputedStyle(h1.closest('.hero-sub')).opacity) > 0.9,
-        imgs, floor: Math.round(floor), link, cookieOpen: !!note };
-    });
-    check('phone first screen: visible H1 "סטודיו לקעקועים בראשון לציון" + 3 work thumbnails above the sticky bar, linking to the gallery',
-      /קעקועים/.test(first.h1) && first.h1Visible && first.imgs.length === 3 && first.imgs.every(i => i.loaded && i.w >= 60 && i.top >= 0 && i.bottom <= first.floor) && first.link === '#gallery',
-      JSON.stringify(first));
     const earlyFilms = reqs.filter(u => /(studio|reveal|line)\.mp4/.test(u));
     check('phone: below-the-fold films are not downloaded at page load', earlyFilms.length === 0, earlyFilms.join(' | '));
-    check('phone: call bar is tappable from the first frame (above the loading screen)', barAtDCL && barAtDCL.tappable, JSON.stringify(barAtDCL));
+    check('phone: both bar buttons are tappable from the first frame (above the loading screen)', barAtDCL && barAtDCL.tappable, JSON.stringify(barAtDCL));
     // scroll to the story film + gallery: film starts on approach, grid uses the 600px copies
     await pp.evaluate(() => document.getElementById('story').scrollIntoView());
     await new Promise(r => setTimeout(r, 1500));

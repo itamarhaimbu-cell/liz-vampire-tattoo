@@ -29,8 +29,41 @@
     root.classList.toggle('a11y-font', !!prefs.font);
   }
   apply();
-  // first visit: reserve the cookie strip's room before the first paint (no layout shift when it appears)
+  // first visit: flag the cookie strip before the first paint (pages keep its room free either way, so nothing shifts)
   if (!load(COOKIE_KEY)) root.classList.add('cookie-open');
+
+  /* ---------- studio hours (Israel time) ----------
+     Call is the main button while someone can answer; WhatsApp is the main button when the studio is closed.
+     Sets html.studio-open / html.studio-closed before the first paint — CSS does the swap, both links stay in the HTML.
+     No class at all (JS off, or no time-zone support) = the WhatsApp-first layout. */
+  var OPEN_HOURS = { Sun: [11, 20], Mon: [11, 20], Tue: [11, 20], Wed: [11, 20], Thu: [11, 20], Fri: [11, 16] };
+  var CALL_LABEL = 'חיוג לסטודיו: 03-9503487';
+  function studioOpen() {
+    try {
+      // window.__studioNow lets the tests pin the clock; visitors always get the real time
+      var now = window.__studioNow != null ? new Date(window.__studioNow) : new Date();
+      var p = {};
+      new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Jerusalem', weekday: 'short', hour: '2-digit', minute: '2-digit', hour12: false })
+        .formatToParts(now).forEach(function (x) { p[x.type] = x.value; });
+      var h = OPEN_HOURS[p.weekday];
+      if (!h) return false;
+      var mins = (parseInt(p.hour, 10) % 24) * 60 + parseInt(p.minute, 10);
+      return mins >= h[0] * 60 && mins < h[1] * 60;
+    } catch (e) { return null; }
+  }
+  function applyHours() {
+    var open = studioOpen();
+    if (open === null) return;
+    root.classList.toggle('studio-open', open);
+    root.classList.toggle('studio-closed', !open);
+    // the wide button's accessible name has to contain the words it shows
+    var call = document.querySelector('.mobile-bar .mb-call');
+    if (call) call.setAttribute('aria-label', (open ? 'התקשרו לייעוץ חינם — ' : '') + CALL_LABEL);
+  }
+  applyHours();
+  setInterval(applyHours, 60000); // flips at 11:00 / 20:00 / Friday 16:00 without a reload
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) applyHours(); });
+  window.__studioRefresh = applyHours;
 
   /* "stop animations" (or the OS reduce-motion setting): no looping video — WCAG 2.2.2 */
   var stillVideo = prefs.still || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -167,7 +200,7 @@
     n.innerHTML = '<p>האתר משתמש בעוגיות של Google כדי למדוד ביקורים ולשפר את הפרסום. ' +
       '<a href="/privacy.html">מדיניות פרטיות</a></p><button type="button">הבנתי</button>';
     document.body.appendChild(n);
-    root.classList.add('cookie-open'); // the home hero lifts its bottom block clear of the strip
+    root.classList.add('cookie-open'); // state flag only: the hero keeps the strip's room free at all times, so nothing moves
     n.querySelector('button').addEventListener('click', function () {
       store(COOKIE_KEY, '1');
       n.remove();
@@ -176,6 +209,7 @@
   }
 
   function init() {
+    applyHours(); // the bar exists now: set its label for the current state
     if (stillVideo) pauseVideos();
     buildMenu();
     cookieNote();

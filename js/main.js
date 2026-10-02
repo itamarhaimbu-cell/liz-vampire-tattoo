@@ -50,10 +50,18 @@
 
   function clamp01(v) { return Math.min(1, Math.max(0, v)); }
 
-  function sectionProgress(section) {
+  // Scroll progress of a pinned section. Every tracked section is measured once at the start of a frame, before any
+  // updater writes styles, so the frame never interleaves layout reads with writes.
+  var tracked = [], progressNow = [];
+  function measureProgress(section) {
     var rect = section.getBoundingClientRect();
     var total = section.offsetHeight - window.innerHeight;
     return total > 0 ? clamp01(-rect.top / total) : 0;
+  }
+  function sectionProgress(section) {
+    var i = tracked.indexOf(section);
+    if (i < 0) { tracked.push(section); return measureProgress(section); }
+    return progressNow[i] === undefined ? measureProgress(section) : progressNow[i];
   }
 
   /* staged copy: fade in/out inside [data-from, data-to] of section progress */
@@ -75,7 +83,7 @@
       if (el.classList.contains('stage-line')) {
         el.style.transform = 'translate(50%,' + (-40 + 10 * o) + '%)';
       } else if (el.classList.contains('hero-sub')) {
-        el.style.transform = 'translateX(50%) translateY(' + (12 * (1 - o)) + 'px)';
+        el.style.transform = (isSmall ? '' : 'translateX(50%) ') + 'translateY(' + (12 * (1 - o)) + 'px)'; // phones: in normal flow under the title
       } else {
         el.style.transform = 'translateY(' + (24 * (1 - o)) + 'px)';
       }
@@ -119,7 +127,7 @@
             var done = function (bmp) {
               frames[i] = bmp || undefined;
               inflight--;
-              if (i === current || (i === 0 && current === -1)) { current = -1; }
+              if (i === current || (i === 0 && current === -1)) { current = -1; wake(); }
               pump();
             };
             if (window.createImageBitmap) {
@@ -197,23 +205,27 @@
     function checkTitleFont() {
       if (haveFace) return;
       document.fonts.load('10px "Metamorphous"').then(function (f) {
-        if (f && f.length && !haveFace) { haveFace = true; fontsReady = true; lastScale = -1; }
+        if (f && f.length && !haveFace) { haveFace = true; fontsReady = true; domLayout = null; lastScale = -1; wake(); }
       }).catch(function () {});
     }
     checkTitleFont();
     var fontCss = document.getElementById('fontcss'); // async stylesheet: the face may not be declared yet
     if (fontCss) fontCss.addEventListener('load', checkTitleFont);
     if (document.fonts.addEventListener) document.fonts.addEventListener('loadingdone', checkTitleFont);
-    setTimeout(function () { if (!fontsReady) { fontsReady = true; lastScale = -1; } }, 3000);
+    setTimeout(function () { if (!fontsReady) { fontsReady = true; lastScale = -1; wake(); } }, 3000);
     var blanked = false;
+    var domLayout = null;
+    var moving = false; // phones: true while the title is zooming (lower-resolution mask)
 
     function resize() {
       // Supersample the mask: the letters are punched into a raster canvas, so on
       // a DPR=1 display (most desktop monitors at 100%) a 1:1 buffer makes the big
       // letterforms alias badly. Render at min 2x, up to 3x on hi-DPI, for crisp edges.
       var dpr = Math.min(Math.max(window.devicePixelRatio || 1, 2), 3);
+      if (isSmall && moving) dpr = Math.min(dpr, 2); // in motion nobody sees the third pixel; the frame gets much cheaper
       canvas.width = canvas.clientWidth * dpr;
       canvas.height = canvas.clientHeight * dpr;
+      domLayout = null; // phone title layout is re-read from the DOM
       lastScale = -1; // force redraw
     }
     window.addEventListener('resize', resize);
@@ -231,8 +243,32 @@
       return Math.min(base * targetW / measured, cap);
     }
     // stencil layout per orientation: [text, fontSize, baselineY, tracking]
+    // Phones lay the title out in the DOM (css/main.css .hero-group): three invisible lines that reserve the space,
+    // with the H1 in normal flow under them. Read their boxes once (not per frame) and punch the letters exactly there,
+    // so the Hebrew line can never overlap the title at any screen size.
+    var domLines = isSmall ? section.querySelectorAll('.hero-title-m span') : [];
+    function readDomLayout(w, h) {
+      if (domLines.length !== 3 || !domLines[0].offsetHeight) return null;
+      var cr = canvas.getBoundingClientRect();
+      if (!cr.width) return null;
+      var k = w / cr.width, lines = [], origin = null;
+      for (var i = 0; i < 3; i++) {
+        var r = domLines[i].getBoundingClientRect();
+        var size = parseFloat(getComputedStyle(domLines[i]).fontSize);
+        ctx.font = size + 'px "Metamorphous"';
+        var m = ctx.measureText('H');
+        var asc = m.fontBoundingBoxAscent > 0 ? m.fontBoundingBoxAscent : size * 0.965;
+        var desc = m.fontBoundingBoxDescent > 0 ? m.fontBoundingBoxDescent : size * 0.285;
+        var baseline = (r.top - cr.top) + (r.height - (asc + desc)) / 2 + asc; // CSS line box: half-leading + ascent
+        lines.push([domLines[i].textContent, size * k, baseline * k / h, i === 2 ? 0.25 : 0]);
+        if (i === 1) origin = { x: 0.505, y: (baseline - size * 0.36) * k / h }; // inside VAMPIRE's letter counters
+      }
+      return { lines: lines, origin: origin };
+    }
     function stencilLines(w, h) {
       if (h > w) { // portrait: three stacked lines
+        if (!domLayout) domLayout = readDomLayout(w, h) || { lines: null, origin: null };
+        if (domLayout.lines) return domLayout.lines;
         var big = fitSize('VAMPIRE', 0, w * 0.9, h * 0.17);
         return [
           ['LIZ', big, 0.35, 0],
@@ -255,6 +291,7 @@
     }
     function zoomOrigin(w, h) {
       // inside the letter counters of VAMPIRE on each layout
+      if (h > w && domLayout && domLayout.origin) return domLayout.origin;
       return h > w ? { x: 0.505, y: 0.45 } : { x: 0.52, y: 0.41 };
     }
 
@@ -297,9 +334,10 @@
       var p = sectionProgress(section);
       // gentler start, committed finish
       var pz = clamp01(p / 0.82);
-      var scale = 1 + Math.pow(pz, 2.4) * (MAX_SCALE - 1);
+      var scale = 1 + Math.pow(pz, isSmall ? 2 : 2.4) * (MAX_SCALE - 1); // phones: short travel, so the zoom answers the first swipe
       // stencil fully dissolved before the pin releases
       var fade = p < 0.70 ? 1 : clamp01(1 - (p - 0.70) / 0.18);
+      if (isSmall && (scale > 1) !== moving) { moving = scale > 1; resize(); }
       if (!fontsReady && !blanked) { // until the title face is in: solid black, not the bare film
         blanked = true;
         ctx.fillStyle = '#060606';
@@ -341,9 +379,21 @@
   })();
 
   /* ---------- raf loop ---------- */
+  // Updaters run when the page actually moved (or was resized), for a short while after something asked for a
+  // redraw (wake()), and a few times a second as a safety net — not 60 times a second while nothing changes.
+  var lastY = -1, lastW = 0, lastH = 0, awake = 30, tick = 0;
+  function wake() { awake = 30; }
+  window.addEventListener('resize', wake);
+  window.addEventListener('load', wake);
   function raf(time) {
     if (lenis) lenis.raf(time);
-    for (var i = 0; i < updaters.length; i++) updaters[i]();
+    var y = window.pageYOffset, w = window.innerWidth, h = window.innerHeight;
+    if (y !== lastY || w !== lastW || h !== lastH || awake > 0 || (tick++ % 12) === 0) {
+      lastY = y; lastW = w; lastH = h;
+      if (awake > 0) awake--;
+      for (var j = 0; j < tracked.length; j++) progressNow[j] = measureProgress(tracked[j]);
+      for (var i = 0; i < updaters.length; i++) updaters[i]();
+    }
     requestAnimationFrame(raf);
   }
   requestAnimationFrame(raf);
@@ -383,7 +433,8 @@
     entries.forEach(function (e) {
       if (e.isIntersecting) { e.target.classList.add('visible'); io.unobserve(e.target); }
     });
-  }, { threshold: 0.18 });
+  // phones: start a fifth of a screen early, so a flick never outruns the fade
+  }, isSmall ? { rootMargin: '0px 0px 20% 0px', threshold: 0 } : { threshold: 0.18 });
   document.querySelectorAll('.reveal').forEach(function (el) { io.observe(el); });
 
   /* ---------- anchor links through Lenis ---------- */

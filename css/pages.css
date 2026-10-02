@@ -79,6 +79,7 @@ img{max-width:100%;height:auto;display:block}
 }
 .btn-wa:hover{background:transparent;color:var(--bone)}
 .cta-block .cta-alt{margin-top:1rem;font-size:1.02rem}
+.cta-block .cta-alt span[dir="ltr"]{white-space:nowrap}
 .cta-block .cta-alt a{color:var(--bone);text-decoration:underline;text-underline-offset:.2em;display:inline-block;min-height:44px;line-height:44px}
 
 /* ---------- FAQ ---------- */
@@ -121,18 +122,43 @@ img{max-width:100%;height:auto;display:block}
   .mobile-bar{
     display:flex;position:fixed;bottom:0;right:0;left:0;z-index:9550;
     height:calc(68px + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);
-    background:rgba(6,6,6,.92);backdrop-filter:blur(12px);border-top:1px solid var(--line);
+    background:var(--black);border-top:1px solid var(--line);
   }
-  .mobile-bar a{flex:1;display:flex;align-items:center;justify-content:center;font-size:1.05rem;letter-spacing:.1em;font-weight:400;text-decoration:none}
-  .mb-wa{background:var(--bone);color:var(--black);gap:.85rem;letter-spacing:normal}
-  .mobile-bar .mb-call{
-    flex:0 0 74px;flex-direction:column;gap:.15rem;background:var(--black);color:var(--bone);
-    font-size:.8rem;letter-spacing:.04em;border-inline-start:1px solid var(--line);
+  .mobile-bar a{display:flex;align-items:center;justify-content:center;font-weight:400;text-decoration:none}
+  /* hours-aware bar: the wide bone button is the main action, the narrow dark one the second option.
+     studio closed (or no JS): WhatsApp is wide. html.studio-open (js/common.js, Israel time): the call button is wide and comes first. */
+  .mobile-bar .mb-wa,html.studio-open .mobile-bar .mb-call{
+    flex:1 1 0;min-width:0;order:0;flex-direction:row;gap:.85rem;padding-inline:.6rem;
+    background:var(--bone);color:var(--black);font-size:1.05rem;letter-spacing:normal;border:0;
   }
-  .mb-call .ic-phone{width:22px;height:22px}
+  .mobile-bar .mb-call,html.studio-open .mobile-bar .mb-wa{
+    flex:0 0 74px;order:1;flex-direction:column;gap:.15rem;padding-inline:0;
+    background:var(--black);color:var(--bone);font-size:.8rem;letter-spacing:.04em;
+    border-inline-start:1px solid var(--line);
+  }
   .mb-ic{width:40px;height:40px;border-radius:50%;background:var(--black);color:var(--bone);display:grid;place-items:center;flex:none}
   .mb-ic svg{width:20px;height:20px}
-  .mb-text{display:flex;flex-direction:column;line-height:1.25}
-  .mb-main{font-weight:700;font-size:1.15rem}
-  .mb-sub{font-size:.85rem;opacity:.72}
+  .mb-text{display:flex;flex-direction:column;line-height:1.25;min-width:0}
+  .mb-main{font-weight:700;font-size:1.15rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mb-sub{font-size:.85rem;opacity:.72;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mb-short,.mb-sub-closed{display:none}
+  html.studio-closed .mb-sub-closed{display:inline}
+  html.studio-closed .mb-sub-any{display:none}
+  /* the narrow button: bare icon + one word */
+  .mobile-bar .mb-call .mb-ic,html.studio-open .mobile-bar .mb-wa .mb-ic{width:auto;height:auto;border-radius:0;background:none;color:inherit}
+  .mobile-bar .mb-call .mb-ic svg,html.studio-open .mobile-bar .mb-wa .mb-ic svg{width:22px;height:22px;animation:none}
+  .mobile-bar .mb-call .mb-text,html.studio-open .mobile-bar .mb-wa .mb-text{display:none}
+  .mobile-bar .mb-call .mb-short,html.studio-open .mobile-bar .mb-wa .mb-short{display:block}
+  /* ...and the call button back to the wide layout while the studio is open */
+  html.studio-open .mobile-bar .mb-call .mb-ic{width:40px;height:40px;border-radius:50%;background:var(--black);color:var(--bone)}
+  html.studio-open .mobile-bar .mb-call .mb-ic svg{width:20px;height:20px}
+  html.studio-open .mobile-bar .mb-call .mb-text{display:flex}
+  html.studio-open .mobile-bar .mb-call .mb-short{display:none}
+}
+/* very narrow phones (320px): the wide button's two lines still fit on one line each */
+@media (max-width:350px){
+  .mb-main{font-size:.98rem}
+  .mb-sub{font-size:.72rem}
+  .mobile-bar .mb-wa,html.studio-open .mobile-bar .mb-call{gap:.5rem;padding-inline:.35rem}
+  .mobile-bar .mb-wa .mb-ic,html.studio-open .mobile-bar .mb-call .mb-ic{width:34px;height:34px}
 }

@@ -148,7 +148,7 @@ img{max-width:100%;display:block}
   margin-top:.4rem;font-size:clamp(.95rem,1.4vw,1.15rem);letter-spacing:.14em;
   color:var(--bone-dim);font-weight:300;white-space:nowrap;
 }
-.hero-thumbs{display:none}
+.hero-group{display:contents} /* desktop: no box of its own; phones turn it into the first-screen column */
 #hero .scroll-hint{z-index:3}
 
 /* ---------- scrub / pinned sections ---------- */
@@ -504,28 +504,34 @@ footer{
   .topbar nav,.nav-cta{display:none}
   #menuBtn{display:flex}
 
-  /* pinned 3D sections: shorter travel for thumbs, svh against the URL bar */
-  .hero-mask{height:185vh}
-  .scrub-section{height:160vh}
+  /* pinned 3D sections: short travel for thumbs (the page must feel like it is moving), svh against the URL bar */
+  .hero-mask{height:160vh}
+  .scrub-section{height:140vh}
+  /* content fades in fast and from close by: on a flick it is already readable when it reaches the middle of the screen */
+  .reveal{transform:translateY(16px);transition:opacity .35s ease-out,transform .35s ease-out}
   .pin{height:100svh}
   .video-section .section-inner{min-height:82svh}
-  /* first screen: H1 + address line + 3 real works, above the sticky bar */
-  .hero-sub{bottom:calc(68px + env(safe-area-inset-bottom) + 1rem);width:100%;padding:0 1rem}
-  html.cookie-open .hero-sub{bottom:calc(68px + env(safe-area-inset-bottom) + 3.9rem)}
+  /* first screen: the brand title, then the H1 and the address line, as ONE group in normal flow.
+     The column is centred between the top bar and the sticky contact bar, and the room for the cookie strip is
+     kept free whether the strip shows or not — so the text never moves and nothing can ride up into the title.
+     100svh = the height with the browser bars showing, so collapsing bars don't make it jump. */
+  .hero-group{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    position:absolute;inset:0;z-index:3;box-sizing:border-box;pointer-events:none;
+    padding:88px 0 calc(68px + env(safe-area-inset-bottom) + 55px + 12px); /* top bar · contact bar + cookie strip + air */
+  }
+  .hero-copy-mobile{display:block;visibility:hidden} /* layout only: the mask canvas paints these letters (js/main.js) */
+  /* VAMPIRE fills 90% of the width (it is 5.158em wide); on short screens the size gives way so the group still fits */
+  .hero-title-m{
+    font-size:min(17.45vw,calc((100svh - 310px) / 3.62));line-height:1.4;
+    letter-spacing:0;text-align:center;white-space:nowrap;text-shadow:none;
+  }
+  .hero-title-m span{display:block}
+  .hero-title-m span:last-child{font-size:.58em;letter-spacing:.25em;padding-left:.25em}
+  .hero-sub{position:static;right:auto;bottom:auto;transform:none;width:100%;padding:0 1rem;margin-top:.9rem}
+  html:not(.a11y-still) #hero .hero-sub.stage{transform:none}
   .hero-h1{font-size:clamp(1.15rem,5.7vw,1.6rem)}
   .hero-meta{font-size:.95rem;margin-top:.2rem}
-  .hero-thumbs{
-    display:grid;grid-template-columns:repeat(3,auto);justify-content:center;gap:.5rem;
-    margin-top:.8rem;text-shadow:none;
-  }
-  .hero-thumbs img{
-    width:min(23vw,12svh,96px);aspect-ratio:1;height:auto;object-fit:cover;
-    border:1px solid var(--line);filter:grayscale(1) contrast(1.05);
-  }
-  .hero-thumbs-label{
-    grid-column:1/-1;font-size:.9rem;letter-spacing:.06em;color:var(--bone-dim);
-    text-shadow:0 1px 8px rgba(0,0,0,.95);padding-top:.1rem;
-  }
   #hero .scroll-hint{display:none}
   .hint-bar{height:34px}
   .gallery-grid.collapsed .gitem:nth-child(n+13){display:none}
@@ -570,34 +576,58 @@ footer{
     display:flex;position:fixed;bottom:0;right:0;left:0;z-index:9550;
     height:calc(68px + env(safe-area-inset-bottom));
     padding-bottom:env(safe-area-inset-bottom);
-    background:rgba(6,6,6,.92);backdrop-filter:blur(12px);border-top:1px solid var(--line);
+    background:var(--black);border-top:1px solid var(--line);
   }
-  .mobile-bar a{
-    flex:1;display:flex;align-items:center;justify-content:center;
-    font-size:1.05rem;letter-spacing:.1em;font-weight:400;
+  .mobile-bar a{display:flex;align-items:center;justify-content:center;font-weight:400;text-decoration:none}
+  /* hours-aware bar: the wide bone button is the main action, the narrow dark one the second option.
+     studio closed (or no JS): WhatsApp is wide. html.studio-open (js/common.js, Israel time): the call button is wide and comes first. */
+  .mobile-bar .mb-wa,html.studio-open .mobile-bar .mb-call{
+    flex:1 1 0;min-width:0;order:0;flex-direction:row;gap:.85rem;padding-inline:.6rem;
+    background:var(--bone);color:var(--black);font-size:1.05rem;letter-spacing:normal;border:0;
   }
-  .mb-wa{background:var(--bone);color:var(--black);gap:.85rem;letter-spacing:normal}
-  .mobile-bar .mb-call{
-    flex:0 0 74px;flex-direction:column;gap:.15rem;
+  .mobile-bar .mb-call,html.studio-open .mobile-bar .mb-wa{
+    flex:0 0 74px;order:1;flex-direction:column;gap:.15rem;padding-inline:0;
     background:var(--black);color:var(--bone);font-size:.8rem;letter-spacing:.04em;
     border-inline-start:1px solid var(--line);
   }
-  .mb-call .ic-phone{width:22px;height:22px}
   .mb-ic{width:40px;height:40px;border-radius:50%;background:var(--black);color:var(--bone);display:grid;place-items:center;flex:none}
   .mb-ic svg{width:20px;height:20px}
-  .mb-text{display:flex;flex-direction:column;line-height:1.25}
-  .mb-main{font-weight:700;font-size:1.15rem}
-  .mb-sub{font-size:.85rem;opacity:.72}
+  .mb-text{display:flex;flex-direction:column;line-height:1.25;min-width:0}
+  .mb-main{font-weight:700;font-size:1.15rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mb-sub{font-size:.85rem;opacity:.72;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mb-short,.mb-sub-closed{display:none}
+  html.studio-closed .mb-sub-closed{display:inline}
+  html.studio-closed .mb-sub-any{display:none}
+  /* the narrow button: bare icon + one word */
+  .mobile-bar .mb-call .mb-ic,html.studio-open .mobile-bar .mb-wa .mb-ic{width:auto;height:auto;border-radius:0;background:none;color:inherit}
+  .mobile-bar .mb-call .mb-ic svg,html.studio-open .mobile-bar .mb-wa .mb-ic svg{width:22px;height:22px;animation:none}
+  .mobile-bar .mb-call .mb-text,html.studio-open .mobile-bar .mb-wa .mb-text{display:none}
+  .mobile-bar .mb-call .mb-short,html.studio-open .mobile-bar .mb-wa .mb-short{display:block}
+  /* ...and the call button back to the wide layout while the studio is open */
+  html.studio-open .mobile-bar .mb-call .mb-ic{width:40px;height:40px;border-radius:50%;background:var(--black);color:var(--bone)}
+  html.studio-open .mobile-bar .mb-call .mb-ic svg{width:20px;height:20px}
+  html.studio-open .mobile-bar .mb-call .mb-text{display:flex}
+  html.studio-open .mobile-bar .mb-call .mb-short{display:none}
 }
-/* short phones (iPhone SE class): smaller thumbnails, no label, so the block clears the TATTOO line */
+@media (max-width:820px) and (prefers-reduced-motion:no-preference){
+  html.studio-open .mobile-bar .mb-call .mb-ic svg{animation:ring 1.3s ease 1.6s 2}
+}
+/* very narrow phones (320px): the wide button's two lines still fit on one line each */
+@media (max-width:350px){
+  .mb-main{font-size:.98rem}
+  .mb-sub{font-size:.72rem}
+  .mobile-bar .mb-wa,html.studio-open .mobile-bar .mb-call{gap:.5rem;padding-inline:.35rem}
+  .mobile-bar .mb-wa .mb-ic,html.studio-open .mobile-bar .mb-call .mb-ic{width:34px;height:34px}
+}
+/* shorter phones: tighter title lines so the whole group keeps clear margins */
 @media (max-width:820px) and (max-height:740px){
-  .hero-sub{bottom:calc(68px + env(safe-area-inset-bottom) + .6rem)}
-  html.cookie-open .hero-sub{bottom:calc(68px + env(safe-area-inset-bottom) + 3.6rem)}
+  .hero-title-m{font-size:min(17.45vw,calc((100svh - 300px) / 3.1));line-height:1.2}
+  .hero-sub{margin-top:.7rem}
   .hero-h1{font-size:clamp(1.1rem,5.4vw,1.4rem)}
-  .hero-meta{font-size:.88rem;margin-top:0}
-  .hero-thumbs{margin-top:.55rem;gap:.4rem}
-  .hero-thumbs img{width:min(19vw,10svh,80px)}
-  .hero-thumbs-label{display:none}
+  .hero-meta{font-size:.88rem;margin-top:.1rem}
+}
+@media (max-width:820px) and (max-height:600px){
+  .hero-title-m{font-size:min(17.45vw,calc((100svh - 295px) / 2.84));line-height:1.1}
 }
 @media (prefers-reduced-motion:reduce){
   .grain{animation:none}
@@ -617,6 +647,7 @@ footer{
     display:flex;position:relative;z-index:3;
     align-items:center;justify-content:center;text-align:center;padding:0 1.2rem;
   }
+  .hero-copy-mobile{visibility:visible}
   .hero-sub{position:relative;bottom:auto;right:auto;transform:none;text-align:center;margin-top:1.2rem;white-space:normal}
   .scroll-hint{display:none}
   .strip-pin{position:relative;height:auto;display:block;padding:4rem 0}
