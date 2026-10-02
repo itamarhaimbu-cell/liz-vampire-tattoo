@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>ליז ואמפייר טאטו — מעבדה: המכונה</title>
+<meta name="theme-color" content="#060606">
+<script>document.documentElement.classList.add('js')</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- fonts load without blocking the first paint (text shows in a fallback face, then swaps) -->
+<link id="fontcss" rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Suez+One&family=Assistant:wght@200;300;400;600;700&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Suez+One&family=Assistant:wght@200;300;400;600;700&display=swap"></noscript>
+<link rel="stylesheet" href="machine.css">
+<link rel="stylesheet" href="/css/common.css">
+<script src="/js/common.js"></script>
+<link rel="icon" href="/favicon.ico" sizes="any">
+</head>
+<body>
+
+<a class="skip-link" href="#main">דלג לתוכן</a>
+
+<!-- gradients for the name (letter outlines, see src/title.py) -->
+<svg class="bt-defs" width="0" height="0" aria-hidden="true" focusable="false"><defs><linearGradient id="bt-steel" x1="0" y1="0" x2="0.04" y2="1"><stop offset="0.06" stop-color="#f7f4ee"/><stop offset="0.33" stop-color="#c2beb5"/><stop offset="0.51" stop-color="#5b5853"/><stop offset="0.59" stop-color="#dcd8cf"/><stop offset="0.8" stop-color="#928e87"/><stop offset="1" stop-color="#cfcbc2"/></linearGradient><linearGradient id="bt-light" x1="0" y1="0" x2="1" y2="0.18"><stop offset="0.36" stop-color="#fff" stop-opacity="0"/><stop offset="0.5" stop-color="#fff" stop-opacity="0.95"/><stop offset="0.64" stop-color="#fff" stop-opacity="0"/></linearGradient></defs></svg>
+
+<!-- film grain over everything -->
+<div class="grain" aria-hidden="true"></div>
+
+<!-- the 3D layer: one canvas, fixed behind the page. Empty until the machine is ready; the stills below cover for it. -->
+<canvas id="gl" aria-hidden="true"></canvas>
+
+<header class="topbar">
+  <a class="brand" href="/"><img class="brand-mark" src="/assets/img/logo-nav.png" width="165" height="132" alt="ליז ואמפייר טאטו"></a>
+</header>
+
+<main id="main">
+
+<!-- ============ 1 · HERO ============ -->
+<section id="hero">
+  <div class="hero-col">
+    <p class="brand-title" role="img" aria-label="Liz Vampire Tattoo" lang="en"><svg class="bt bt-liz" viewBox="0 -1849 3576 2314" aria-hidden="true" focusable="false"><path id="bt-liz" class="bt-ink" d="M74 -84Q201 -96 225 -118Q249 -139 254 -166Q258 -193 258 -235V-1297Q258 -1382 233 -1402Q208 -1423 172 -1430Q135 -1438 74 -1443V-1530H657V-1444Q535 -1438 506 -1418Q478 -1398 470 -1372Q462 -1345 462 -1301V-210Q462 -144 522 -125Q569 -110 698 -110Q828 -110 899 -113Q970 -116 1020 -127Q1070 -138 1103 -160Q1136 -181 1160 -217Q1194 -270 1242 -436H1335L1258 78H1172Q1169 41 1148 20Q1126 0 1091 0H74ZM1518 -82 1520 -83 1552 -88Q1643 -100 1662 -121Q1691 -154 1691 -265V-1267Q1691 -1381 1667 -1403Q1643 -1425 1609 -1432Q1575 -1438 1518 -1443V-1530H2065V-1443Q2009 -1437 1975 -1432Q1941 -1426 1923 -1410Q1893 -1382 1893 -1267V-265Q1893 -153 1911 -131Q1929 -109 1956 -102Q1982 -96 2027 -89L2065 -83V0H1518ZM3231 -1409H2666Q2541 -1409 2484 -1346Q2455 -1314 2436 -1268Q2417 -1222 2395 -1161L2373 -1101H2273L2407 -1611H2500Q2496 -1569 2514 -1550Q2531 -1530 2561 -1530H3499L3521 -1471L2601 -123H3131Q3296 -123 3356 -196Q3388 -234 3405 -294Q3422 -355 3439 -441H3536L3473 78H3375Q3375 23 3332 5Q3320 0 3308 0H2321L2298 -61Z"/><clipPath id="bt-liz-c"><use href="#bt-liz"/></clipPath><g clip-path="url(#bt-liz-c)"><rect class="bt-sheen" x="0" y="-1849" width="3576" height="2314"/></g></svg><svg class="bt bt-vampire" viewBox="0 -1849 10563 2314" aria-hidden="true" focusable="false"><path id="bt-vampire" class="bt-ink" d="M181 -1308Q153 -1378 131 -1398Q94 -1435 26 -1444V-1531H528V-1444Q409 -1440 378 -1416Q363 -1405 363 -1394Q363 -1384 380 -1340L797 -274Q1118 -1118 1146 -1196L1188 -1318Q1204 -1363 1204 -1378Q1204 -1394 1194 -1408Q1183 -1423 1163 -1430Q1130 -1443 1049 -1443V-1530H1504V-1443Q1436 -1434 1416 -1410Q1396 -1385 1385 -1359L812 59H742ZM1576 -83Q1690 -103 1706 -118Q1721 -132 1722 -152Q1723 -173 1723 -210L1722 -313V-367Q1722 -896 1856 -1154Q1941 -1320 2111 -1456Q2193 -1521 2295 -1589H2296Q2519 -1440 2624 -1314Q2751 -1163 2806 -950Q2862 -732 2862 -369V-313L2861 -212Q2861 -174 2864 -153Q2867 -132 2882 -120Q2901 -103 3018 -83V0H2469V-83Q2600 -98 2626 -126Q2647 -149 2650 -195Q2652 -241 2652 -284V-526H1933V-284Q1933 -219 1936 -182Q1940 -146 1958 -126Q1976 -107 2013 -99Q2050 -91 2117 -83V0H1576ZM2650 -638Q2648 -896 2578 -1064Q2504 -1241 2295 -1448Q2154 -1307 2098 -1216Q2041 -1126 2015 -1064Q1989 -1002 1972 -935Q1944 -817 1935 -638ZM3095 -83Q3185 -96 3209 -106Q3247 -124 3256 -167L3548 -1559H3622L4175 -338L4711 -1559H4779L5060 -266Q5084 -148 5120 -119Q5140 -102 5172 -96Q5204 -90 5256 -83V0H4687V-83Q4793 -100 4816 -113Q4853 -133 4853 -189Q4853 -204 4850 -224L4845 -266L4684 -1104L4174 50H4107L3587 -1104L3415 -203Q3412 -185 3412 -168Q3412 -150 3421 -135Q3430 -120 3452 -110Q3494 -91 3605 -83V0H3095ZM5906 -648Q5948 -640 6020 -640Q6091 -640 6152 -670Q6212 -700 6250 -754Q6323 -858 6323 -1048Q6323 -1231 6276 -1320Q6210 -1443 6021 -1443Q5789 -1443 5766 -1330Q5759 -1295 5759 -1254V-264Q5759 -206 5765 -174Q5771 -142 5791 -125Q5811 -108 5850 -102Q5888 -95 5953 -88L6008 -82V0H5384V-82Q5389 -84 5399 -84Q5409 -85 5434 -88Q5460 -92 5487 -99Q5514 -106 5530 -124Q5557 -155 5557 -264V-1277Q5557 -1374 5534 -1397Q5512 -1420 5478 -1429Q5443 -1438 5384 -1443V-1530H5644Q5741 -1530 5838 -1541Q5936 -1552 6062 -1552Q6189 -1552 6288 -1512Q6387 -1471 6445 -1403Q6549 -1281 6549 -1060Q6549 -836 6431 -696Q6295 -535 6030 -535Q5969 -535 5889 -555ZM6803 -82 6805 -83 6837 -88Q6928 -100 6947 -121Q6976 -154 6976 -265V-1267Q6976 -1381 6952 -1403Q6928 -1425 6894 -1432Q6860 -1438 6803 -1443V-1530H7350V-1443Q7294 -1437 7260 -1432Q7226 -1426 7208 -1410Q7178 -1382 7178 -1267V-265Q7178 -153 7196 -131Q7214 -109 7240 -102Q7267 -96 7312 -89L7350 -83V0H6803ZM8568 -1108Q8568 -1443 8242 -1443Q8000 -1443 7972 -1315Q7964 -1278 7964 -1237V-265Q7964 -206 7970 -174Q7976 -142 7996 -125Q8016 -108 8054 -102Q8093 -95 8158 -88L8212 -82V1H7588V-82L7622 -87Q7666 -93 7693 -100Q7720 -106 7735 -124Q7761 -154 7761 -265V-1277Q7761 -1375 7738 -1398Q7716 -1421 7682 -1430Q7647 -1439 7588 -1444V-1530H7848Q7905 -1530 7999 -1538Q8181 -1552 8284 -1552Q8386 -1552 8490 -1518Q8595 -1484 8663 -1425Q8795 -1309 8795 -1119Q8795 -976 8709 -853Q8612 -712 8423 -650L9104 284L9029 341L8154 -640L8198 -729H8274Q8393 -729 8475 -822Q8568 -930 8568 -1108ZM9928 -104Q10228 -104 10405 -292L10455 -225Q10322 -44 10058 8Q9975 25 9886 25Q9713 25 9574 -36Q9435 -96 9338 -199Q9137 -412 9137 -725Q9137 -1055 9320 -1294Q9443 -1455 9637 -1520Q9735 -1552 9820 -1552Q9904 -1552 9944 -1547Q9985 -1542 10017 -1534Q10049 -1526 10074 -1516Q10100 -1507 10130 -1497Q10212 -1469 10262 -1469Q10312 -1469 10371 -1551H10467L10334 -1021H10239Q10244 -1098 10244 -1129Q10244 -1195 10228 -1246Q10213 -1296 10176 -1332Q10139 -1368 10088 -1393Q9986 -1443 9864 -1443Q9741 -1443 9654 -1394Q9566 -1345 9506 -1260Q9393 -1097 9371 -817H10016L9989 -704H9368Q9378 -471 9522 -296Q9681 -104 9928 -104Z"/><clipPath id="bt-vampire-c"><use href="#bt-vampire"/></clipPath><g clip-path="url(#bt-vampire-c)"><rect class="bt-sheen" x="0" y="-1849" width="10563" height="2314"/></g></svg><svg class="bt bt-tattoo" viewBox="0 -2330 12099 3277" aria-hidden="true" focusable="false"><path id="bt-tattoo" class="bt-ink" d="M1257 -1100Q1278 -1213 1278 -1266Q1278 -1318 1266 -1348Q1253 -1377 1224 -1394Q1174 -1424 1034 -1424H865V-269Q865 -211 872 -178Q879 -146 906 -129Q933 -112 986 -104Q1040 -96 1133 -87V0H403V-87Q580 -104 612 -125Q645 -146 654 -178Q662 -211 662 -269V-1424H470Q290 -1424 210 -1248Q185 -1194 160 -1132L148 -1101H50L162 -1530H1458L1353 -1100ZM2091 -83Q2205 -103 2220 -118Q2236 -132 2237 -152Q2238 -173 2238 -210L2237 -313V-367Q2237 -896 2371 -1154Q2456 -1320 2626 -1456Q2708 -1521 2810 -1589H2811Q3034 -1440 3139 -1314Q3266 -1163 3321 -950Q3377 -732 3377 -369V-313L3376 -212Q3376 -174 3379 -153Q3382 -132 3397 -120Q3416 -103 3533 -83V0H2984V-83Q3115 -98 3141 -126Q3162 -149 3164 -195Q3167 -241 3167 -284V-526H2448V-284Q2448 -219 2452 -182Q2455 -146 2473 -126Q2491 -107 2528 -99Q2565 -91 2632 -83V0H2091ZM3165 -638Q3163 -896 3093 -1064Q3019 -1241 2810 -1448Q2669 -1307 2612 -1216Q2556 -1126 2530 -1064Q2504 -1002 2487 -935Q2459 -817 2450 -638ZM5348 -1100Q5369 -1213 5369 -1266Q5369 -1318 5356 -1348Q5344 -1377 5315 -1394Q5265 -1424 5125 -1424H4956V-269Q4956 -211 4963 -178Q4970 -146 4997 -129Q5024 -112 5078 -104Q5131 -96 5224 -87V0H4494V-87Q4671 -104 4704 -125Q4736 -146 4744 -178Q4753 -211 4753 -269V-1424H4561Q4381 -1424 4301 -1248Q4276 -1194 4251 -1132L4239 -1101H4141L4253 -1530H5549L5444 -1100ZM7393 -1100Q7414 -1213 7414 -1266Q7414 -1318 7402 -1348Q7389 -1377 7360 -1394Q7310 -1424 7170 -1424H7001V-269Q7001 -211 7008 -178Q7015 -146 7042 -129Q7069 -112 7122 -104Q7176 -96 7269 -87V0H6539V-87Q6716 -104 6748 -125Q6781 -146 6790 -178Q6798 -211 6798 -269V-1424H6606Q6426 -1424 6346 -1248Q6321 -1194 6296 -1132L6284 -1101H6186L6298 -1530H7594L7489 -1100ZM8300 -756Q8300 -854 8320 -951Q8340 -1048 8380 -1136Q8421 -1225 8482 -1300Q8543 -1376 8624 -1432Q8796 -1551 9032 -1551Q9381 -1551 9583 -1300Q9765 -1075 9765 -756Q9765 -434 9583 -218Q9383 20 9032 20Q8679 20 8481 -220Q8300 -438 8300 -756ZM8727 -182Q8845 -81 9034 -81Q9386 -81 9490 -434Q9530 -570 9530 -756Q9530 -1296 9209 -1415Q9134 -1443 9034 -1443Q8681 -1443 8579 -1078Q8539 -937 8539 -806Q8539 -674 8548 -592Q8557 -510 8578 -435Q8600 -360 8636 -295Q8672 -230 8727 -182ZM10515 -756Q10515 -854 10535 -951Q10555 -1048 10596 -1136Q10636 -1225 10697 -1300Q10758 -1376 10839 -1432Q11011 -1551 11247 -1551Q11596 -1551 11798 -1300Q11980 -1075 11980 -756Q11980 -434 11798 -218Q11598 20 11247 20Q10894 20 10696 -220Q10515 -438 10515 -756ZM10942 -182Q11060 -81 11249 -81Q11601 -81 11705 -434Q11745 -570 11745 -756Q11745 -1296 11424 -1415Q11349 -1443 11249 -1443Q10896 -1443 10794 -1078Q10754 -937 10754 -806Q10754 -674 10763 -592Q10772 -510 10794 -435Q10815 -360 10851 -295Q10887 -230 10942 -182Z"/><clipPath id="bt-tattoo-c"><use href="#bt-tattoo"/></clipPath><g clip-path="url(#bt-tattoo-c)"><rect class="bt-sheen" x="0" y="-2330" width="12099" height="3277"/></g></svg></p>
+    <h1 class="hero-h1">סטודיו לקעקועים בראשון לציון</h1>
+    <p class="hero-meta">מאז 1996 · הרצל 91</p>
+  </div>
+  <div class="hero-stage">
+    <div class="slot slot-hero" data-pose="hero" aria-hidden="true">
+      <img class="poster" src="img/poster-hero.webp" width="1085" height="434" alt="" fetchpriority="high" decoding="async">
+    </div>
+  </div>
+</section>
+
+<!-- ============ 2 · STORY — the barrel in close-up: the year is engraved on it ============ -->
+<section id="story">
+  <div class="slot slot-story" data-pose="story" aria-hidden="true">
+    <picture>
+      <source media="(min-width:821px)" data-srcset="img/poster-story-wide.webp">
+      <img class="poster" data-src="img/poster-story.webp" width="1179" height="786" alt="" decoding="async">
+    </picture>
+    <noscript><img class="poster" src="img/poster-story.webp" width="1179" height="786" alt=""></noscript>
+  </div>
+  <div class="inner story-inner">
+    <h2 class="kicker">מקעקעים בראשון לציון מאז 1996</h2>
+    <p class="display story-title">היינו כאן לפני<br>שזה היה מגניב.</p>
+    <p class="story-p">ב־1996 קעקוע היה הצהרה. ליז פתחה סטודיו בראשון והפכה אותו למקצוע. שלושים שנה אחרי — הסטנדרט עוד נקבע כאן.</p>
+  </div>
+</section>
+
+<!-- ============ 3 · CRAFT — the needle comes down and draws one unbroken line ============ -->
+<section id="craft" aria-label="ככה נראה ניסיון">
+  <div class="inner">
+    <p class="display craft-title">ככה נראה ניסיון.</p>
+  </div>
+  <div class="slot slot-craft" data-pose="craft" aria-hidden="true">
+    <!-- the shape of the line (geometry only: the machine draws it in the 3D layer, the still below shows it finished) -->
+    <svg class="ink" viewBox="0 0 360 300" preserveAspectRatio="xMidYMid meet" focusable="false">
+      <path class="ink-line" d="M 180 252 Q 197 224 221 226 Q 246 208 270 222 Q 302 204 334 170 Q 268 186 214 188 Q 205 175 197 158 Q 189 170 180 177 Q 171 170 163 158 Q 155 175 146 188 Q 92 186 26 170 Q 58 204 90 222 Q 114 208 139 226 Q 163 224 180 252 C 183 270 181 292 180 318"/>
+    </svg>
+    <img class="poster" data-src="img/poster-craft.webp" width="1045" height="1045" alt="" decoding="async">
+    <noscript><img class="poster" src="img/poster-craft.webp" width="1045" height="1045" alt=""></noscript>
+  </div>
+  <div class="inner">
+    <p class="craft-line">לא בתעודות ולא בקירות — בקו אחד רציף, ביד אחת שקטה.</p>
+  </div>
+</section>
+
+<!-- ============ 4 · PRICE + HOW TO BOOK (as on the site) — then the machine is put down ============ -->
+<section id="price">
+  <div class="inner price-inner">
+    <h2 class="kicker">כמה עולה קעקוע · איך קובעים תור</h2>
+    <p class="display price-lead">המחיר נקבע לפי הגודל, <br>המיקום והסגנון.</p>
+    <p class="price-p">שלחו תמונה או רעיון <a href="https://wa.me/972542264377?text=%D7%94%D7%99%D7%99%2C%20%D7%94%D7%92%D7%A2%D7%AA%D7%99%20%D7%9E%D7%94%D7%90%D7%AA%D7%A8%20%D7%95%D7%90%D7%A9%D7%9E%D7%97%20%D7%9C%D7%A4%D7%A8%D7%98%D7%99%D7%9D%20%D7%A2%D7%9C%20%D7%A7%D7%A2%D7%A7%D7%95%D7%A2" target="_blank" rel="noopener">בוואטסאפ<span class="sr-only"> (נפתח בוואטסאפ)</span></a>, או <a href="tel:039503487">התקשרו</a> — ונגיד לכם כמה זה יעלה. הייעוץ חינם.</p>
+    <ol class="price-steps">
+      <li><span class="step-n" aria-hidden="true">1</span><strong>שולחים רעיון</strong><span>תמונה, סקיצה או כמה מילים — בוואטסאפ או בטלפון.</span></li>
+      <li><span class="step-n" aria-hidden="true">2</span><strong>ייעוץ חינם</strong><span>מדייקים יחד את העיצוב ואת המחיר, בלי התחייבות.</span></li>
+      <li><span class="step-n" aria-hidden="true">3</span><strong>קובעים תור</strong><span>ומתחילים לעבוד, בסטודיו בהרצל 91.</span></li>
+    </ol>
+    <div class="slot slot-rest" data-pose="rest" aria-hidden="true">
+      <img class="poster" data-src="img/poster-rest.webp" width="1045" height="313" alt="" decoding="async">
+      <noscript><img class="poster" src="img/poster-rest.webp" width="1045" height="313" alt=""></noscript>
+    </div>
+    <a class="price-gallery" href="/#gallery">לראות עבודות מהסטודיו ←</a>
+    <a class="next" href="/#artists">המשך האתר ←</a>
+  </div>
+</section>
+
+</main>
+
+<!-- mobile sticky bar (same markup as the site; no tracking on this lab page) -->
+<div class="mobile-bar" role="complementary" aria-label="יצירת קשר מהירה">
+  <a href="https://wa.me/972542264377?text=%D7%94%D7%99%D7%99%2C%20%D7%94%D7%92%D7%A2%D7%AA%D7%99%20%D7%9E%D7%94%D7%90%D7%AA%D7%A8%20%D7%95%D7%90%D7%A9%D7%9E%D7%97%20%D7%9C%D7%A4%D7%A8%D7%98%D7%99%D7%9D%20%D7%A2%D7%9C%20%D7%A7%D7%A2%D7%A7%D7%95%D7%A2" target="_blank" rel="noopener" class="mb-wa"><span class="mb-ic"><svg class="ic-wa" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg></span><span class="mb-text"><span class="mb-main">שלחו וואטסאפ לייעוץ חינם</span><span class="mb-sub"><span class="mb-sub-closed">סגורים עכשיו, נחזור אליכם · <span dir="ltr">4.6★</span></span><span class="mb-sub-any"><span dir="ltr">4.6★</span> · 244 ביקורות בגוגל</span></span></span><span class="mb-short">וואטסאפ</span><span class="sr-only"> (נפתח בוואטסאפ)</span></a>
+  <a href="tel:039503487" class="mb-call" aria-label="חיוג לסטודיו: 03-9503487"><span class="mb-ic"><svg class="ic-phone" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25c1.12.37 2.33.57 3.6.57a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.57a1 1 0 0 1-.25 1z"/></svg></span><span class="mb-text"><span class="mb-main">התקשרו לייעוץ חינם</span><span class="mb-sub">פתוחים עכשיו · <span dir="ltr">4.6★</span> · 244 ביקורות בגוגל</span></span><span class="mb-short">חיוג</span></a>
+</div>
+
+<script>
+/* Small boot script. The page is complete without it; it adds two things:
+   - keeps the clock for the ink line: it is drawn once, over time, when its section comes into view (never tied to scroll position),
+   - loads the 3D machine after the first paint — unless motion is switched off. */
+(function () {
+  'use strict';
+  var root = document.documentElement, lab = window.__lab = window.__lab || {};
+  var still = root.classList.contains('a11y-still') || !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  lab.still = still;
+
+  /* the line. Its shape is the hidden SVG path; the machine draws it (machine.js) as time passes — 5 seconds, once —
+        from the moment its section is half in view. This script only keeps the clock: progress depends on time, not on scroll. */
+  var line = document.querySelector('.ink-line'), stage = document.querySelector('.slot-craft');
+  var LEN = line.getTotalLength(), N = 360, pts = new Float32Array((N + 1) * 2);
+  for (var i = 0; i <= N; i++) { var p = line.getPointAtLength(LEN * i / N); pts[i * 2] = p.x; pts[i * 2 + 1] = p.y; }
+  var ink = lab.ink = { pts: pts, rest: [228, 156], dur: 5200, t0: still ? 0 : -1, doneAt: still ? 0 : Infinity, onchange: null };
+  function ease(u) { return u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2; }
+  ink.progress = function (now) { if (ink.t0 === 0) return 1; if (ink.t0 < 0) return 0; var u = (now - ink.t0) / ink.dur; return u >= 1 ? 1 : ease(u); };
+  ink.running = function (now) { return ink.t0 > 0 && now - ink.t0 < ink.dur + 1600; };
+  ink.start = function () { if (ink.t0 >= 0) return; ink.t0 = performance.now(); ink.doneAt = ink.t0 + ink.dur; if (ink.onchange) ink.onchange(); };
+  ink.finish = function () { ink.t0 = 0; ink.doneAt = 0; if (ink.onchange) ink.onchange(); };
+  if (!still) {
+    if ('IntersectionObserver' in window) {
+      new IntersectionObserver(function (es, io) {
+        var e = es[es.length - 1];
+        if (e.isIntersecting && e.intersectionRatio >= 0.5) { io.disconnect(); setTimeout(ink.start, 380); }      // let the machine arrive first
+        else if (!e.isIntersecting && e.boundingClientRect.bottom < 0) { io.disconnect(); ink.finish(); }           // already scrolled past
+      }, { threshold: [0, 0.5] }).observe(stage);
+    } else ink.finish();
+  }
+
+  /* the machine: only after the first paint, in idle time. The hero still is already on screen; the other stills
+        are fetched only if the live machine is not coming (motion off, no WebGL, the GPU was lost). */
+  var stillsIn = false;
+  function stills() {
+    if (stillsIn) return; stillsIn = true;
+    [].forEach.call(document.querySelectorAll('[data-srcset]'), function (e) { e.srcset = e.getAttribute('data-srcset'); });
+    [].forEach.call(document.querySelectorAll('img[data-src]'), function (e) { e.src = e.getAttribute('data-src'); });
+  }
+  lab.stills = stills;
+  lab.onLive = function () { root.classList.add('sweep'); };
+  if (still) stills();
+  else {
+    var started = false;
+    var go = function () {
+      if (started) return; started = true;
+      var load = function () {
+        import('./machine.js').catch(stills);                                         // no WebGL / blocked: the stills stay
+        setTimeout(function () { if (!root.classList.contains('gl')) stills(); }, 6000); // still not live: don't leave the slots empty
+      };
+      if (window.requestIdleCallback) window.requestIdleCallback(load, { timeout: 900 }); else setTimeout(load, 120);
+    };
+    try {
+      new PerformanceObserver(function (list) { if (list.getEntriesByName('first-contentful-paint').length) go(); }).observe({ type: 'paint', buffered: true });
+    } catch (e) { /* no paint timing: the timer below starts it */ }
+    setTimeout(go, 1500);
+  }
+})();
+</script>
+</body>
+</html>

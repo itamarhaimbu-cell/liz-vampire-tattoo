@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl" class="at-hero">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>ליז ואמפייר טאטו — סטודיו לקעקועים בראשון לציון (lab: chrome bat)</title>
+<meta name="theme-color" content="#060606">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- fonts load without blocking the first paint (text shows in a fallback face, then swaps) -->
+<link id="fontcss" rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Suez+One&family=Metamorphous&family=Assistant:wght@200;300;400;600;700&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Suez+One&family=Metamorphous&family=Assistant:wght@200;300;400;600;700&display=swap"></noscript>
+<link rel="stylesheet" href="css/bat.css">
+<link rel="stylesheet" href="/css/common.css">
+<script src="/js/common.js"></script>
+<link rel="icon" href="/favicon.ico" sizes="any">
+</head>
+<body>
+
+<a class="skip-link" href="#main">דלג לתוכן</a>
+<div class="grain" aria-hidden="true"></div>
+
+<header class="topbar">
+  <a class="brand" href="/"><img class="brand-mark" src="/assets/img/logo-nav.png" width="165" height="132" alt="ליז ואמפייר טאטו"></a>
+  <button id="menuBtn" aria-label="תפריט" aria-expanded="false" aria-controls="mobileMenu"><span></span><span></span></button>
+</header>
+<div id="mobileMenu" role="dialog" aria-modal="true" aria-label="תפריט ניווט" hidden>
+  <button id="menuClose" aria-label="סגירה">✕</button>
+  <nav>
+    <a href="/#story">הסיפור</a>
+    <a href="/#artists">האמנים</a>
+    <a href="/#gallery">עבודות</a>
+    <a href="/#studio">הסטודיו</a>
+    <a href="/#proof">לקוחות מספרים</a>
+    <a href="/#contact">צרו קשר</a>
+  </nav>
+</div>
+
+<!-- the emblem in 3D: one canvas behind the text, drawn only when something moves -->
+<canvas id="stage" aria-hidden="true"></canvas>
+
+<main id="main">
+
+<!-- 0 · HERO — the emblem is the logo: flat at first paint, chrome a moment later, in the same place -->
+<section class="chapter" id="c-hero" data-yaw="0" data-pitch="0" data-roll="0" data-sway="1">
+  <div class="hero-lockup">
+    <div class="emblem" id="emblem"><svg class="emblem-flat" viewBox="0 0 763 612" role="img" aria-label="ליז ואמפייר טאטו"><path id="batShape" fill="currentColor" fill-rule="evenodd" d="M30 301L30 307.8L29 313.2L28.8 341L29 354L30 358.5L30 365.2L31.2 374.5L32.5 373.8L33.8 367.8L37.8 357.8L45 343L52 332.2L62.8 319.2L73.5 309.8L84 303L97 297.8L107.8 295.8L118.5 295.8L132.8 298.8L145.5 304.8L152 309.5L161.8 319L170 330.2L174 338L178 349L178.2 352.2L179.5 353.8L189.2 348.8L198 345.8L210.8 343.8L220.5 343.8L233.8 345.8L244.2 348.8L261.5 355.8L273.2 361.8L292.2 373.8L309.5 387.8L330 408.5L340.8 422L355 444.2L363 459.8L373 484L379.2 503.5L385.8 483.5L392.8 465.8L398.8 452.5L408 435.2L418 420.2L429.8 405.5L442 392.8L456.2 380L473.2 367.8L486.5 360L506.8 350.8L523.5 345.8L538.8 343.8L553.5 344.8L565 347.8L578.8 353.8L583.8 338L588.8 328.5L593.8 321.2L601.8 312.5L607.5 307.8L615.5 302.8L622 299.8L637 296L651.2 295.8L665 298.8L672.8 301.8L682 306.8L696 317.5L705 326.5L712 335.5L724.8 356.2L730 367.5L732.2 374.2L733 373.8L734.8 350L734.8 328.5L733.8 312.5L730.8 293.2L730.8 289.2L723.8 259.2L714.8 233.8L703.5 209.2L690.5 186.2L674.8 162.5L653.8 136.5L633.5 115L607 91.8L577.5 70.2L551.5 55.2L524.8 43L502.2 35L487.8 31L479.5 30L477.5 29L476.2 29L476 29.8L491 44.5L503.8 60.2L513 74.5L519 86.2L523 96.2L526 108.2L527 115.2L527 133.8L525 144.2L520 158.8L514 170.2L506.2 182L495.8 194.2L484.5 204.8L471.5 214.8L457.2 224L429.2 238L421.5 241L419.5 240.2L422.8 234.2L425.8 225L428.8 208L429.8 197L428.8 174L426.8 159L423.8 144L419.8 130.5L419 130.8L419 132.5L409 160.2L401 178L397.2 184L383.5 180.8L376 181L367.5 184L365.5 183.8L361.8 178.2L353.8 160.5L343.8 133.2L342.5 133.2L340 141.2L336 160.5L334 179.8L334 206.2L335 215.5L338 229.5L342.8 240.2L342.2 241L336.2 240L322.2 235L307.2 228L294.5 221L276.2 208L257.8 190.5L244.8 173.2L235.8 156.2L230.8 139.5L229.8 132L229.8 115.5L231.8 103.2L233.8 96.5L242 78.2L257.8 54.5L267 43.2L280.5 29.8L280.5 29L278.2 29L260.5 33L234.2 42L213.2 51L188.8 64L171.5 75L152.2 89.2L130.8 108L115.2 123.5L97 144.5L84 161.5L69.2 184L57 206.5L50 221.8L42 243.2L34 274.5ZM331 308L364.8 308.2L364 309.5L358.5 311L354.5 314.5L354 317.5L374 368.2L379.2 379.2L381.8 375.5L384.8 366.2L403.8 319L403.8 314.5L401.8 312L397.2 310L394 309.8L392.2 308.2L421.8 308L420.8 309.5L418 310L414.5 312L411 316.5L406 331L394 359.8L394 361.2L379 398.8L377.8 400.2L375.8 398.8L359.8 358.5L340.5 313.5L338.2 311L331 309ZM122.8 159.8L154.8 160.2L153.5 161.8L147.5 163L144 166.2L144 234.5L145.8 236.8L149 238.8L166.5 238.8L171.5 236.8L174.5 233.5L176.8 228.2L177.8 227.8L178 235.2L177 242.2L176 243.8L124 243L124.5 241.8L128.2 240.8L131.2 238.8L133.8 234.2L133.8 167.2L132.8 165.5L129.5 163L122.8 161.2ZM636.5 157.8L637 177.5L636.2 178.8L635 178.2L634.8 174.2L632.5 168.5L629 165.2L623.2 164.2L615.2 164.2L612.2 165L610 167.8L610 234.5L613 238.5L617.8 240.8L620.2 241L621.5 242.5L589.2 243.2L588.8 242.5L596.2 238.8L598.5 236L599 233.8L599 165.5L597.2 164.2L590.5 164L585.2 164.2L578.5 166L575 170.2L573.8 177.5L572.2 179L572 158.8L573.2 158.2L580 160L631.5 159.8Z"/><ellipse class="emblem-ground" fill="currentColor" cx="378.75" cy="564.75" rx="134.25" ry="19.25"/></svg></div>
+    <p class="wordmark">LIZ VAMPIRE TATTOO</p>
+    <span class="hero-rule" aria-hidden="true"></span>
+    <h1 class="hero-h1">סטודיו לקעקועים בראשון לציון</h1>
+    <p class="hero-meta">מאז 1996 · הרצל 91</p>
+  </div>
+</section>
+
+<!-- 1 · STORY — 1996 -->
+<section class="chapter" id="c-story" data-yaw="-0.62" data-pitch="0.14" data-roll="0.07" data-sway="0.45">
+  <!-- the emblem's place in this chapter; the flat copy inside only shows when the 3D one is not running -->
+  <div class="bat-area" aria-hidden="true"><div class="bat-slot"><svg viewBox="0 0 763 520"><use href="#batShape"/></svg></div></div>
+  <div class="story-copy">
+    <p class="mark" aria-hidden="true">01 · 1996</p>
+    <h2 class="kicker">מקעקעים בראשון לציון מאז 1996</h2>
+    <p class="display story-title">היינו כאן לפני<br>שזה היה מגניב.</p>
+    <p class="story-p">ב־1996 קעקוע היה הצהרה. ליז פתחה סטודיו בראשון והפכה אותו למקצוע. שלושים שנה אחרי — הסטנדרט עוד נקבע כאן.</p>
+  </div>
+</section>
+
+<!-- 2 · CRAFT — the emblem turns edge-on and becomes the one continuous line; real work behind it -->
+<section class="chapter" id="c-craft" data-yaw="0" data-pitch="1.5708" data-roll="0" data-sway="0" data-thin="0.16">
+  <img class="craft-photo" src="assets/craft-s.jpg" srcset="assets/craft-s.jpg 390w, assets/craft.jpg 780w" sizes="(min-width:821px) 46vw, 100vw" width="780" height="1100" alt="קעקוע — פסל האלה" loading="lazy" decoding="async">
+  <div class="craft-shade" aria-hidden="true"></div>
+  <div class="craft-copy">
+    <p class="mark" aria-hidden="true">02 · 2026</p>
+    <h2 class="display craft-title">ככה נראה ניסיון.</h2>
+    <div class="craft-line" aria-hidden="true"><span class="bat-slot"></span></div>
+    <p class="craft-p">לא בתעודות ולא בקירות — בקו אחד רציף, ביד אחת שקטה.</p>
+  </div>
+</section>
+
+<!-- PRICE + HOW TO BOOK — normal scrolling from here on -->
+<section id="price">
+  <div class="section-inner price-inner">
+    <h2 class="kicker">כמה עולה קעקוע · איך קובעים תור</h2>
+    <p class="display price-lead">המחיר נקבע לפי הגודל,<br>המיקום והסגנון.</p>
+    <p class="price-p">שלחו תמונה או רעיון <a href="https://wa.me/972542264377?text=%D7%94%D7%99%D7%99%2C%20%D7%94%D7%92%D7%A2%D7%AA%D7%99%20%D7%9E%D7%94%D7%90%D7%AA%D7%A8%20%D7%95%D7%90%D7%A9%D7%9E%D7%97%20%D7%9C%D7%A4%D7%A8%D7%98%D7%99%D7%9D%20%D7%A2%D7%9C%20%D7%A7%D7%A2%D7%A7%D7%95%D7%A2" target="_blank" rel="noopener">בוואטסאפ<span class="sr-only"> (נפתח בוואטסאפ)</span></a>, או <a href="tel:039503487">התקשרו</a> — ונגיד לכם כמה זה יעלה. הייעוץ חינם.</p>
+    <ol class="price-steps">
+      <li><span class="step-n" aria-hidden="true">1</span><strong>שולחים רעיון</strong><span>תמונה, סקיצה או כמה מילים — בוואטסאפ או בטלפון.</span></li>
+      <li><span class="step-n" aria-hidden="true">2</span><strong>ייעוץ חינם</strong><span>מדייקים יחד את העיצוב ואת המחיר, בלי התחייבות.</span></li>
+      <li><span class="step-n" aria-hidden="true">3</span><strong>קובעים תור</strong><span>ומתחילים לעבוד, בסטודיו בהרצל 91.</span></li>
+    </ol>
+    <a class="price-gallery" href="/#gallery">לראות עבודות מהסטודיו ←</a>
+  </div>
+</section>
+
+<p class="onward"><span dir="ltr">lab · chrome bat</span><a href="/#gallery">המשך האתר ←</a></p>
+
+</main>
+
+<div class="mobile-bar" role="complementary" aria-label="יצירת קשר מהירה">
+  <a href="https://wa.me/972542264377?text=%D7%94%D7%99%D7%99%2C%20%D7%94%D7%92%D7%A2%D7%AA%D7%99%20%D7%9E%D7%94%D7%90%D7%AA%D7%A8%20%D7%95%D7%90%D7%A9%D7%9E%D7%97%20%D7%9C%D7%A4%D7%A8%D7%98%D7%99%D7%9D%20%D7%A2%D7%9C%20%D7%A7%D7%A2%D7%A7%D7%95%D7%A2" target="_blank" rel="noopener" class="mb-wa"><span class="mb-ic"><svg class="ic-wa" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg></span><span class="mb-text"><span class="mb-main">שלחו וואטסאפ לייעוץ חינם</span><span class="mb-sub"><span class="mb-sub-closed">סגורים עכשיו, נחזור אליכם · <span dir="ltr">4.6★</span></span><span class="mb-sub-any"><span dir="ltr">4.6★</span> · 244 ביקורות בגוגל</span></span></span><span class="mb-short">וואטסאפ</span><span class="sr-only"> (נפתח בוואטסאפ)</span></a>
+  <a href="tel:039503487" class="mb-call" aria-label="חיוג לסטודיו: 03-9503487"><span class="mb-ic"><svg class="ic-phone" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25c1.12.37 2.33.57 3.6.57a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.57a1 1 0 0 1-.25 1z"/></svg></span><span class="mb-text"><span class="mb-main">התקשרו לייעוץ חינם</span><span class="mb-sub">פתוחים עכשיו · <span dir="ltr">4.6★</span> · 244 ביקורות בגוגל</span></span><span class="mb-short">חיוג</span></a>
+</div>
+
+<script src="js/page.js" defer></script>
+</body>
+</html>

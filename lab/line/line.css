@@ -1,0 +1,213 @@
+/* ============ LAB · "ONE LINE" ============
+   The opening of the page as one unbroken ink line (line.js builds it from the layout).
+   Same palette and faces as the site. Text is in normal flow and never tied to scroll. */
+:root{
+  --black:#060606;
+  --ink:#0d0d0d;
+  --bone:#ece7dd;
+  --bone-dim:#c6c1b7;
+  --gray:#8a857c;
+  --line:rgba(236,231,221,.16);
+  --serif:"Suez One", serif;
+  --sans:"Assistant", sans-serif;
+  --bar:0px;      /* sticky contact bar (phones) */
+  --strip:0px;    /* room kept free for the cookie strip (phones) */
+}
+@font-face{font-family:"Metamorphous";font-style:normal;font-weight:400;font-display:swap;src:url(assets/metamorphous-latin.woff2) format("woff2")}
+*{margin:0;padding:0;box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  background:var(--black);color:var(--bone);font-family:var(--sans);font-weight:300;
+  direction:rtl;overflow-x:hidden;-webkit-font-smoothing:antialiased;line-height:1.7;
+}
+a{color:inherit;text-decoration:none}
+img{max-width:100%;display:block}
+::selection{background:var(--bone);color:var(--black)}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.display{font-family:var(--serif);font-weight:400;line-height:1.18;letter-spacing:.005em}
+
+/* film grain, as on the site */
+.grain{
+  position:fixed;inset:-100px;z-index:9000;pointer-events:none;opacity:.09;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation:grain .9s steps(4) infinite;
+}
+@keyframes grain{0%{transform:translate(0,0)}25%{transform:translate(-40px,30px)}50%{transform:translate(30px,-50px)}75%{transform:translate(-30px,-20px)}100%{transform:translate(0,0)}}
+
+/* ---------- top bar (in flow: nothing scrolls underneath it) ---------- */
+.lab-top{
+  position:absolute;top:0;right:0;left:0;z-index:20;height:84px;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 clamp(1.2rem,4vw,3rem);
+}
+.lab-top .brand{display:inline-flex;align-items:center;line-height:0;min-height:44px}
+.lab-top .brand-mark{height:44px;width:auto}
+.lab-top nav a{
+  display:inline-flex;align-items:center;min-height:44px;font-size:1rem;font-weight:400;
+  color:var(--bone-dim);border-bottom:1px solid transparent;transition:color .25s,border-color .25s;
+}
+.lab-top nav a:hover{color:var(--bone);border-color:var(--bone)}
+
+/* ---------- the stage that carries the line ---------- */
+.line-stage{position:relative;overflow:hidden}          /* the lamp and the needle may reach past the edge: never widen the page */
+.ln-svg{position:absolute;top:0;left:0;width:100%;height:100%;z-index:1;pointer-events:none;overflow:visible}
+.ln-svg path{fill:none;stroke-linecap:round;stroke-linejoin:round}
+.ln-ink path{stroke:var(--bone);stroke-width:1.7}
+.ln-halo path{stroke:var(--bone);stroke-width:8;opacity:.07;stroke-linecap:butt;transition:opacity 1.4s ease}   /* butt: the stretches meet without a doubled blot */
+.ln-halo path.is-fresh{opacity:.17;transition:none}          /* ink that was just laid is still wet */
+.ln-wet{stroke:#fff;stroke-width:2.6;opacity:0}
+.ln-dots circle{fill:var(--bone)}
+.ln-dots .dot{transform-box:fill-box;transform-origin:center;transform:scale(0);transition:transform .45s cubic-bezier(.2,1.6,.4,1)}
+.ln-dots .dot.is-on{transform:scale(1)}
+.ln-box{pointer-events:none}                                  /* room the line draws into */
+.line-stage section{position:relative}
+.line-stage .inner,.hero-group{position:relative;z-index:2}
+
+/* the needle riding the head of the line + the lamp that follows it */
+/* both sit above the line and BELOW the text (z-index 2): the hand may pass a word, it never covers one */
+.ln-needle,.ln-glow{position:absolute;top:0;left:0;z-index:1;pointer-events:none;opacity:0;will-change:transform,opacity}
+.ln-needle{width:28px;height:88px;transform-origin:14px 86px;transition:opacity .35s ease}
+.ln-needle svg{display:block}
+.ln-glow{
+  width:260px;height:260px;border-radius:50%;z-index:0;transition:opacity .6s ease;
+  background:radial-gradient(circle,rgba(236,231,221,.13) 0,rgba(236,231,221,.05) 38%,rgba(236,231,221,0) 68%);
+}
+.ln-needle.is-on{opacity:1}
+.ln-glow.is-on{opacity:1}
+.ln-needle.is-rest{opacity:.75}
+.ln-still .ln-needle,.ln-still .ln-glow,html.a11y-still .ln-needle,html.a11y-still .ln-glow{display:none}
+
+/* ============ HERO ============ */
+.hero{
+  min-height:100vh;min-height:100svh;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+  padding:92px 1rem calc(var(--bar) + var(--strip) + 2.5rem);
+  background:radial-gradient(ellipse 85% 46% at 50% 40%,rgba(236,231,221,.06) 0,rgba(236,231,221,.02) 55%,rgba(236,231,221,0) 100%);   /* a lamp on the title; gone before the section ends */
+}
+.hero-group{display:flex;flex-direction:column;align-items:center;width:100%}
+/* full-width boxes: when the web faces arrive the letters re-centre inside them, the boxes themselves do not move */
+.hero-title,.hero-h1,.hero-meta{width:100%;text-align:center}
+.hero-title{
+  font-family:"Metamorphous",var(--serif);font-weight:400;white-space:nowrap;line-height:1.12;
+  font-size:min(16.6vw,7.4rem);                                  /* browsers without svh */
+  font-size:min(16.6vw,calc((100svh - 380px) / 2.9),7.4rem);
+  color:var(--bone);
+  background:linear-gradient(180deg,#f6f3ec 0%,#b4afa5 30%,#3c3a36 49%,#8d887f 54%,#ebe6dc 76%,#77736b 100%);
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+}
+.hero-title span{display:block}
+.ln-wait .hero-title{visibility:hidden;opacity:0}
+.ln-wait.ln-face .hero-title{visibility:visible;opacity:1;transition:opacity .5s ease}
+.hero-title span:last-child{font-size:.58em;letter-spacing:.25em;padding-left:.25em}
+.hero-h1{
+  font-family:var(--serif);font-weight:400;white-space:nowrap;line-height:1.25;letter-spacing:.01em;
+  font-size:clamp(1.15rem,5.7vw,1.95rem);margin-top:.9rem;
+}
+.hero-meta{margin-top:.25rem;font-size:clamp(.92rem,1.4vw,1.15rem);letter-spacing:.14em;color:var(--bone-dim);white-space:nowrap}
+.ln-flourish{width:min(76vw,430px);height:56px;height:clamp(46px,8.6svh,70px);margin-top:.55rem}
+
+/* ============ sections ============ */
+.inner{max-width:780px;margin:0 auto;padding:clamp(4rem,10vh,7.5rem) clamp(1.4rem,5vw,3rem)}
+.kicker{font-family:var(--sans);font-size:1.05rem;letter-spacing:.18em;color:var(--bone-dim);font-weight:400;line-height:1.6;margin-bottom:1.6rem}
+
+.ln-year{width:min(100%,430px);aspect-ratio:410/150;margin:0 auto 2.2rem 0}   /* the numerals stand here; the line enters from the left margin */
+.story-title{font-size:clamp(2.2rem,10.2vw,4.6rem)}
+.story-p{margin-top:1.8rem;font-size:clamp(1.12rem,1.9vw,1.4rem);color:var(--bone-dim);line-height:1.9;max-width:34em}
+
+.craft .inner{text-align:center;padding-block:clamp(3rem,8vh,6rem)}
+.craft-title{font-size:clamp(2.1rem,9.2vw,4.4rem)}
+.ln-bat{
+  width:min(100%,400px);aspect-ratio:763/612;margin:2.2rem auto 0;position:relative;
+}
+.ln-bat::before{                                              /* the lamp over the work */
+  content:"";position:absolute;inset:-22% -16% -14%;z-index:-1;border-radius:50%;
+  background:radial-gradient(closest-side,rgba(236,231,221,.085) 0,rgba(236,231,221,.03) 55%,rgba(236,231,221,0) 100%);
+}
+.craft-line{margin:2.8rem auto 0;font-size:clamp(1.35rem,5.6vw,2.1rem);line-height:1.5;max-width:17em;text-wrap:balance}
+
+.price-lead{font-size:clamp(2rem,8.6vw,3.4rem)}
+.price-p{margin-top:1.4rem;max-width:52ch;color:var(--bone-dim);font-size:clamp(1.1rem,1.8vw,1.3rem);line-height:1.9}
+.price-p a{color:var(--bone);border-bottom:1px solid var(--bone-dim);padding-bottom:.05rem;position:relative}
+.price-p a::after{content:"";position:absolute;inset:-10px -4px}
+.steps{list-style:none;margin-top:1.6rem}
+.step{display:grid;grid-template-columns:2.9rem 1fr;align-items:start;padding:1.5rem 0 1.6rem}
+.step-n{font-family:var(--serif);font-size:2.5rem;line-height:1;color:var(--bone)}
+.step-t{display:flex;flex-direction:column;gap:.25rem}
+.step strong{font-family:var(--serif);font-weight:400;font-size:1.4rem;line-height:1.3;color:var(--bone)}
+.step-t span{color:var(--bone-dim);font-size:1.05rem;line-height:1.7}
+/* the numeral fills with ink when the line has passed under its step (only while the line animates) */
+@supports (-webkit-text-stroke:1px #000){
+  .ln-live .step-n{color:transparent;-webkit-text-stroke:1px var(--gray);transition:color .5s ease,-webkit-text-stroke-color .5s ease}
+  .ln-live .step.is-inked .step-n{color:var(--bone);-webkit-text-stroke-color:var(--bone)}
+}
+.price-gallery{
+  display:inline-block;margin-top:1.9rem;font-size:1.05rem;letter-spacing:.06em;color:var(--bone-dim);
+  padding:.6rem 0 .5rem;position:relative;transition:color .3s;
+}
+.price-gallery::after{content:"";position:absolute;inset:-7px -4px}
+.price-gallery:hover{color:var(--bone)}
+.price .inner{padding-bottom:clamp(3rem,7vh,5rem)}
+
+.lab-end{text-align:center;padding:1rem 1rem 4.5rem;position:relative;z-index:2}
+.lab-end a{display:inline-flex;align-items:center;min-height:44px;color:var(--gray);font-size:1rem;letter-spacing:.06em;border-bottom:1px solid var(--line)}
+.lab-end a:hover{color:var(--bone);border-color:var(--bone)}
+
+/* ---------- desktop: the same column, more air ---------- */
+@media (min-width:821px){
+  .hero{padding-bottom:4rem}
+  .inner{padding-inline:4.6rem 3rem}                           /* right (gutter side) · left */
+}
+
+/* ---------- phones ---------- */
+.mobile-bar{display:none}
+@media (max-width:820px){
+  :root{--bar:calc(68px + env(safe-area-inset-bottom));--strip:55px}
+  body{padding-bottom:var(--bar)}
+  .inner{padding-inline:3.3rem 1.5rem}                         /* right · left: the line runs down the right gutter, beside the start of each Hebrew line */
+  .lab-top nav a{font-size:.98rem}
+  .mobile-bar{
+    display:flex;position:fixed;bottom:0;right:0;left:0;z-index:9550;
+    height:calc(68px + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);
+    background:var(--black);border-top:1px solid var(--line);
+  }
+  .mobile-bar a{display:flex;align-items:center;justify-content:center;font-weight:400;text-decoration:none}
+  .mobile-bar .mb-wa,html.studio-open .mobile-bar .mb-call{
+    flex:1 1 0;min-width:0;order:0;flex-direction:row;gap:.85rem;padding-inline:.6rem;
+    background:var(--bone);color:var(--black);font-size:1.05rem;letter-spacing:normal;border:0;
+  }
+  .mobile-bar .mb-call,html.studio-open .mobile-bar .mb-wa{
+    flex:0 0 74px;order:1;flex-direction:column;gap:.15rem;padding-inline:0;
+    background:var(--black);color:var(--bone);font-size:.8rem;letter-spacing:.04em;
+    border-inline-start:1px solid var(--line);
+  }
+  .mb-ic{width:40px;height:40px;border-radius:50%;background:var(--black);color:var(--bone);display:grid;place-items:center;flex:none}
+  .mb-ic svg{width:20px;height:20px}
+  .mb-text{display:flex;flex-direction:column;line-height:1.25;min-width:0}
+  .mb-main{font-weight:700;font-size:1.15rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mb-sub{font-size:.85rem;opacity:.72;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mb-short,.mb-sub-closed{display:none}
+  html.studio-closed .mb-sub-closed{display:inline}
+  html.studio-closed .mb-sub-any{display:none}
+  .mobile-bar .mb-call .mb-ic,html.studio-open .mobile-bar .mb-wa .mb-ic{width:auto;height:auto;border-radius:0;background:none;color:inherit}
+  .mobile-bar .mb-call .mb-ic svg,html.studio-open .mobile-bar .mb-wa .mb-ic svg{width:22px;height:22px}
+  .mobile-bar .mb-call .mb-text,html.studio-open .mobile-bar .mb-wa .mb-text{display:none}
+  .mobile-bar .mb-call .mb-short,html.studio-open .mobile-bar .mb-wa .mb-short{display:block}
+  html.studio-open .mobile-bar .mb-call .mb-ic{width:40px;height:40px;border-radius:50%;background:var(--black);color:var(--bone)}
+  html.studio-open .mobile-bar .mb-call .mb-ic svg{width:20px;height:20px}
+  html.studio-open .mobile-bar .mb-call .mb-text{display:flex}
+  html.studio-open .mobile-bar .mb-call .mb-short{display:none}
+}
+@media (max-width:350px){
+  .mb-main{font-size:.98rem}
+  .mb-sub{font-size:.72rem}
+  .mobile-bar .mb-wa,html.studio-open .mobile-bar .mb-call{gap:.5rem;padding-inline:.35rem}
+  .mobile-bar .mb-wa .mb-ic,html.studio-open .mobile-bar .mb-call .mb-ic{width:34px;height:34px}
+  .inner{padding-inline:3.2rem 1.1rem}
+  .step strong{font-size:1.25rem}
+}
+
+/* static version: the line is simply there */
+@media (prefers-reduced-motion:reduce){
+  .grain{animation:none}
+  .ln-halo path,.ln-dots .dot,.step-n{transition:none!important}
+}
