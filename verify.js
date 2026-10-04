@@ -291,17 +291,21 @@ function check(name, ok, detail) {
   });
   check('nav links centered', Math.abs(nav.navCenter - nav.viewCenter) < 8, JSON.stringify(nav));
 
-  // WhatsApp is the main CTA: nav pill + menu CTA open WhatsApp; calling stays one tap away
+  // nav pill + menu follow opening hours: closed = WhatsApp (call one tap away), open = call (WhatsApp one tap away)
   const WA_PREFIX = 'https://wa.me/972542264377?text=';
   const callState = await page.evaluate(() => ({
-    navCta: document.querySelector('.nav-cta').getAttribute('href'),
-    menuCta: document.querySelector('.menu-cta').getAttribute('href'),
-    menuCall: (document.querySelector('.menu-call') || { getAttribute: () => null }).getAttribute('href'),
+    navCta: document.querySelector('.nav-cta.when-closed').getAttribute('href'),
+    navOpen: document.querySelector('.nav-cta.when-open').getAttribute('href'),
+    menuCta: document.querySelector('.menu-cta.when-closed').getAttribute('href'),
+    menuCall: (document.querySelector('.menu-call.when-closed') || { getAttribute: () => null }).getAttribute('href'),
+    menuOpenCta: document.querySelector('.menu-cta.when-open').getAttribute('href'),
+    menuOpenAlt: document.querySelector('.menu-call.when-open').getAttribute('href'),
     waLinks: [...document.querySelectorAll('a[href*="wa.me/972542264377"]')].map(a => ({ href: a.getAttribute('href'), target: a.target, rel: a.rel })),
   }));
-  check('WhatsApp is the main CTA: nav + menu open wa.me (prefilled, new tab), menu keeps a call link',
+  check('nav pill + menu: WhatsApp when closed (call link kept), call when open (WhatsApp link kept); wa.me prefilled, new tab',
     callState.navCta.startsWith(WA_PREFIX) && callState.menuCta.startsWith(WA_PREFIX) && callState.menuCall === 'tel:039503487' &&
-    callState.waLinks.length === 7 && callState.waLinks.every(w => w.href.startsWith(WA_PREFIX) && w.href.length > WA_PREFIX.length && w.target === '_blank' && /noopener/.test(w.rel)),
+    callState.navOpen === 'tel:039503487' && callState.menuOpenCta === 'tel:039503487' && callState.menuOpenAlt.startsWith(WA_PREFIX) &&
+    callState.waLinks.length === 8 && callState.waLinks.every(w => w.href.startsWith(WA_PREFIX) && w.href.length > WA_PREFIX.length && w.target === '_blank' && /noopener/.test(w.rel)),
     JSON.stringify({ nav: callState.navCta.slice(0, 40), menuCall: callState.menuCall, wa: callState.waLinks.length }));
 
   // booking: closed = WhatsApp button + phone number under it; open = call button + WhatsApp under it (both pairs in the HTML); no form
@@ -419,7 +423,7 @@ function check(name, ok, detail) {
     return { links: links.length, fired: after - before, adsConversions: conv };
   });
   check('every call CTA fires call_click',
-    callTrack.links === 6 && callTrack.fired === callTrack.links && callTrack.adsConversions === callTrack.links,
+    callTrack.links === 8 && callTrack.fired === callTrack.links && callTrack.adsConversions === callTrack.links,
     JSON.stringify(callTrack));
 
   const waTrack = await page.evaluate(() => {
@@ -439,7 +443,7 @@ function check(name, ok, detail) {
     return { links: links.length, exactlyOne: per.every(p => p.ev === 1 && p.cv === 1 && p.call === 0), per };
   });
   check('every WhatsApp link fires exactly one whatsapp_click → AW-18472197461/DzqeCJjpyYsdENW6nehE',
-    waTrack.links === 7 && waTrack.exactlyOne, JSON.stringify({ links: waTrack.links, exactlyOne: waTrack.exactlyOne }));
+    waTrack.links === 8 && waTrack.exactlyOne, JSON.stringify({ links: waTrack.links, exactlyOne: waTrack.exactlyOne }));
 
   // academy strip
   const academy = await page.evaluate(() => {
@@ -501,7 +505,7 @@ function check(name, ok, detail) {
   await new Promise(r => setTimeout(r, 600));
   const menuState = await mp.evaluate(() => ({
     open: document.getElementById('mobileMenu').classList.contains('open'),
-    links: document.querySelectorAll('#mobileMenu nav a').length,
+    links: [...document.querySelectorAll('#mobileMenu nav a')].filter(a => getComputedStyle(a).display !== 'none').length,
   }));
   await mp.screenshot({ path: SHOT('13-mobile-menu.png') });
   await mp.tap('#mobileMenu nav a[href="#gallery"]');
@@ -867,12 +871,13 @@ function check(name, ok, detail) {
     await dk.goto(URL, { waitUntil: 'networkidle2' }); await wait(1500);
     const dkState = await dk.evaluate(() => {
       const shown = s => { const e = document.querySelector(s); return !!e && e.getBoundingClientRect().width > 0; };
-      return { cls: document.documentElement.className.match(/studio-\w+/g), nav: document.querySelector('.nav-cta').getAttribute('href').slice(0, 26),
+      const navShown = [...document.querySelectorAll('.nav-cta')].filter(a => a.getBoundingClientRect().width > 0);
+      return { cls: document.documentElement.className.match(/studio-\w+/g), nav: navShown.length === 1 ? navShown[0].getAttribute('href').slice(0, 26) : 'shown:' + navShown.length,
         callBtn: shown('#booking a.btn.when-open[href="tel:039503487"]'), waBtn: shown('#booking a.btn.when-closed'), waAlt: shown('#booking .booking-alt.when-open a[href*="wa.me/972542264377"]') };
     });
     const dkAxe = await axeViolations(dk);
-    check('desktop (studio open): nav pill stays WhatsApp, #booking leads with the call button, axe 0 violations',
-      dkState.cls[0] === 'studio-open' && dkState.nav === 'https://wa.me/972542264377' && dkState.callBtn && !dkState.waBtn && dkState.waAlt && dkAxe.length === 0,
+    check('desktop (studio open): nav pill is the call button, #booking leads with the call button, axe 0 violations',
+      dkState.cls[0] === 'studio-open' && dkState.nav === 'tel:039503487' && dkState.callBtn && !dkState.waBtn && dkState.waAlt && dkAxe.length === 0,
       JSON.stringify(dkState) + ' ' + dkAxe.join(' | '));
     await dk.browserContext().close();
   }

@@ -664,3 +664,8 @@ footer{
 .faq-item .faq-more{display:inline-block;margin:.2rem 0 .6rem;font-size:.95rem;color:var(--bone);text-decoration:underline;text-underline-offset:.25em;position:relative}
 .faq-item .faq-more::after{content:"";position:absolute;inset:-12px -4px}
 .foot-services{line-height:2}
+
+/* top pill + phone menu follow opening hours too (the call variants carry the phone icon) */
+.nav-cta .ic-phone{width:1.05em;height:1.05em}
+#mobileMenu .menu-cta .ic-phone{width:1.15em;height:1.15em}
+#mobileMenu nav a:nth-child(9),#mobileMenu nav a:nth-child(10){transition-delay:.35s}
