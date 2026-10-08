@@ -1,0 +1,176 @@
+/* ============ DRAFT A+D — INK + WINDOW (craft opens out of a framed window) ============
+   The hero is the live hero, untouched (css/main.css). After it, the page sits on one fixed stage of films:
+   every section has its film in .bd-stack, and the next section's film bleeds in over the current one through
+   organic ink (ink.js draws the bleed in WebGL; the DOM layer takes over once it has fully covered the screen).
+   Text never rides the scroll: it is in normal flow and its lines rise in once, on a clock (GSAP SplitText). */
+
+/* ---------- fixed film stage ---------- */
+.bd-stack{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.bd{position:absolute;inset:0;opacity:0}
+.bd.on{opacity:1}
+.bd-media{
+  position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+  transform-origin:50% 50%; /* the grey (and its contrast) is baked into the films: no live CSS filter, nothing recoloured per frame */
+}
+#hero .hero-video{filter:none} /* the hero film is baked grey too (assets/video/bw) */
+/* the shade and vignette are mirrored 1:1 in the ink shader, so the hand-over from canvas to DOM is invisible */
+.bd-shade{position:absolute;inset:0;background:linear-gradient(rgba(6,6,6,var(--s0)),rgba(6,6,6,var(--s1)) 50%,rgba(6,6,6,var(--s2)))}
+.bd-vig{position:absolute;inset:0;background:radial-gradient(ellipse at center,transparent 40%,rgba(0,0,0,.72) 100%)}
+
+/* the ink bleed: above the films (and the hero's own film), below every line of text */
+.ink-gl{position:fixed;inset:0;width:100%;height:100%;z-index:3;pointer-events:none;visibility:hidden}
+.ink-gl.on{visibility:visible}
+
+/* ---------- sections: transparent, so the stage shows through ---------- */
+.ink-sec{
+  position:relative;z-index:4;
+  padding:44svh 0 24svh; /* the first 44% of a screen is where the ink spreads before any text arrives */
+  text-shadow:0 1px 2px rgba(0,0,0,.35),0 2px 26px rgba(0,0,0,.55);
+}
+#price,#artists{border-top:0}
+.ink-inner{max-width:1200px;margin:0 auto;padding:0 clamp(1.4rem,5vw,3rem)}
+.ink-sec .kicker{margin-bottom:2rem}
+
+/* SplitText line masks: a little room under each line so no letter is clipped */
+.ink-ln-mask{padding-bottom:.14em;margin-bottom:-.14em}
+
+/* story */
+.ink-story-title{font-size:clamp(3rem,8vw,6.4rem)}
+.ink-story-p{
+  margin-top:2.4rem;max-width:46ch;
+  font-size:clamp(1.15rem,1.9vw,1.5rem);color:var(--bone-dim);font-weight:300;line-height:1.9;
+}
+
+/* price + how to book: the live classes, re-dressed for a film behind them */
+.ink-price .price-inner,.ink-price .ink-inner{max-width:1100px}
+.ink-steps li{
+  position:relative;border:0;padding:1.6rem 1.4rem 1.5rem;
+  background:linear-gradient(rgba(6,6,6,.5),rgba(6,6,6,.22));
+}
+.step-rule{position:absolute;top:0;right:0;left:0;height:1px;background:var(--bone);opacity:.5;transform-origin:100% 50%}
+.ink-steps .step-n{color:var(--bone)}
+
+/* craft: one statement, centred on the line film */
+.ink-craft{padding:48svh 0 34svh;text-align:center}
+.ink-center{display:flex;flex-direction:column;align-items:center}
+.ink-craft-title{font-size:clamp(2.7rem,7vw,5.6rem)}
+.ink-craft-line{
+  margin-top:1.4rem;max-width:26ch;
+  font-family:var(--serif);font-size:clamp(1.45rem,3.1vw,2.35rem);line-height:1.45;color:var(--bone);
+}
+
+/* artists */
+.ink-artists-grid{display:grid;grid-template-columns:1fr 1fr;gap:clamp(1.5rem,4vw,4rem)}
+.ink-artist{
+  position:relative;overflow:hidden;padding:3rem 2.4rem 2.6rem;
+  border-top:1px solid rgba(236,231,221,.34);
+  background:linear-gradient(rgba(6,6,6,.5),rgba(6,6,6,.18));
+}
+.ink-artist .artist-num{
+  position:absolute;top:-1.2rem;left:.4rem;
+  font-family:var(--serif);font-size:7rem;line-height:1.4;color:transparent;
+  -webkit-text-stroke:1px rgba(236,231,221,.22);pointer-events:none;text-shadow:none;
+  font-variant-numeric:tabular-nums;
+}
+.ink-artist h3{position:relative;font-size:clamp(3rem,5.5vw,4.8rem)}
+.ink-artist .artist-role,.ink-artist .artist-bio,.ink-artist .artist-ig{position:relative}
+
+footer{position:relative;z-index:4;background:var(--black)}
+
+/* chapter mark (desktop): a quiet timecode for where you are */
+.ink-chapter{
+  position:fixed;left:clamp(1.2rem,3vw,2.6rem);bottom:2rem;z-index:7;pointer-events:none;
+  font-size:.82rem;letter-spacing:.26em;color:var(--bone-dim);opacity:0;transition:opacity .7s ease;
+}
+.ink-chapter.on{opacity:.8}
+.ink-chapter-t{display:inline-block}
+
+/* ---------- craft: the window (A+D) ----------
+   The craft film is the stage's craft layer, clipped (ink.js) from a small framed 4:5 window on black to full bleed.
+   The section itself only holds the pinned copy: one screen tall, sticky, plus the travel and a reading hold. */
+.bd-black{background:#060606}
+.win-frame{
+  position:absolute;top:0;left:0;width:0;height:0;opacity:0;pointer-events:none;
+  border:1px solid rgba(236,231,221,.5);
+  box-shadow:inset 0 0 64px 22px rgba(0,0,0,.55); /* the inner vignette of the window */
+  will-change:transform,opacity;
+}
+.win-cap{
+  position:absolute;top:0;left:0;right:0;margin:0;text-align:center;opacity:0;pointer-events:none;
+  font-size:.78rem;letter-spacing:.26em;color:var(--bone-dim);will-change:transform,opacity;
+}
+.ink-win{position:relative;z-index:4;height:calc(100svh + 130svh + 72svh)} /* screen + window travel + reading hold */
+.win-pin{
+  position:sticky;top:0;height:100svh;display:flex;align-items:center;justify-content:center;
+  text-shadow:0 1px 2px rgba(0,0,0,.4),0 2px 30px rgba(0,0,0,.6);
+}
+.win-copy{text-align:center}
+
+/* ============ FINAL DRAFT: artists on black, then the rest of the live site ============ */
+/* artists: plain black, like the live section (the stage under it is a black still) */
+.ink-artists{text-shadow:none}
+
+/* styles: over its film on the stage; the section itself is transparent like the opening */
+.ink-styles{padding-bottom:30svh}
+.ink-styles .styles-lede{margin:-1.2rem 0 3rem}
+.ink-styles .styles-list li{text-shadow:none} /* see-through letters (background-clip:text) would wear the shadow as a halo */
+
+/* from the gallery on: the live sections, on solid black over the stage (they slide over the styles film) */
+.solid-sec{position:relative;z-index:4;background:var(--black)}
+#academy{position:relative;z-index:4}
+.foot-back{margin-top:1rem}
+
+/* photos settle in (ink.js tweens --settle on the frame; the hover zoom keeps working on top of it) */
+.gitem img{transform:scale(calc(1.02 * var(--settle, 1)))}
+.gitem:hover img{transform:scale(calc(1.07 * var(--settle, 1)))}
+.gitem.settling img{transition:filter .7s ease} /* no transform transition while it settles: no double easing */
+.sframe{overflow:hidden}
+.sframe img{transform:scale(var(--settle, 1));transform-origin:50% 40%}
+
+/* contact: the map is a card in this draft (the artifact viewer blocks the Google Maps frame) */
+.map-card{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.2rem;
+  border:1px solid var(--line);text-align:center;padding:2rem;
+  background:
+    radial-gradient(circle at 50% 46%, rgba(236,231,221,.07), transparent 58%),
+    repeating-linear-gradient(0deg, transparent 0 46px, rgba(236,231,221,.035) 46px 47px),
+    repeating-linear-gradient(90deg, transparent 0 46px, rgba(236,231,221,.035) 46px 47px),
+    var(--ink);
+}
+.map-pin{
+  width:18px;height:18px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);
+  border:1.5px solid var(--bone);box-shadow:0 0 0 6px rgba(236,231,221,.08);
+}
+.map-card-addr{font-size:clamp(1.5rem,3vw,2.1rem);color:var(--bone)}
+.map-card-link{
+  font-size:1.05rem;letter-spacing:.06em;color:var(--bone-dim);
+  border-bottom:1px solid var(--line);padding:.5rem 0 .15rem;transition:color .3s,border-color .3s;
+}
+.map-card-link:hover{color:var(--bone);border-color:var(--bone)}
+
+/* ---------- phones ---------- */
+@media (max-width:820px){
+  .ink-styles{padding-bottom:22svh}
+  .ink-sec{padding:40svh 0 22svh}
+  .ink-story-p br,.ink-craft-line br,.ink-artist .artist-bio br{display:none}
+  .ink-craft{padding:44svh 0 24svh}
+  .ink-craft-line{max-width:22ch}
+  .ink-artists-grid{grid-template-columns:1fr;gap:1.2rem}
+  .ink-artist{padding:2.4rem 1.4rem 2rem}
+  .ink-artist .artist-num{font-size:clamp(3.4rem,15vw,4.8rem);top:-.4rem;left:.3rem}
+  .ink-steps li{padding:1.3rem 1.2rem 1.2rem}
+  .ink-chapter{display:none}
+  .ink-win{height:calc(100svh + 110svh + 70svh)}
+  .win-pin{padding-bottom:68px} /* centre the copy above the contact bar */
+}
+
+/* ---------- reduced motion / "stop animations": the same page, still ---------- */
+@media (prefers-reduced-motion:reduce){
+  .ink-gl,.win-frame,.win-cap{display:none}
+}
+html.a11y-still .ink-gl,html.a11y-still .win-frame,html.a11y-still .win-cap{display:none}
+
+/* ---------- light mode: a browser with no working graphics card (software rendering), flagged in <head>, or a machine
+   that couldn't hold the ink's frame rate (ink.js). Same page and layout; the costly per-frame extras rest. ---------- */
+.lowgpu .grain{animation:none}
+.lowgpu .win-frame{box-shadow:none}
