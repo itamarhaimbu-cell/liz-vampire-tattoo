@@ -3,9 +3,9 @@
       artists, while a section's top travels from the bottom of the screen to 22% of it, its film bleeds in over the
       current one through ink — a WebGL shader (domain-warped noise, fibrous capillary edge, a light-catching rim, a
       faint bleed halo ahead of it). When the ink has covered the screen the DOM layer takes over and the canvas sleeps.
-   2. CRAFT is the window (concept D): the screen goes to black, the needle film appears as a small framed window,
-      and as the reader scrolls (the section pins) the window opens to full bleed while the film inside settles from
-      1.15 to 1 — the camera moving into the frame. Only once it is fully open does the craft copy rise in.
+   2. CRAFT is the window (concept D): the screen goes to black, the needle film appears whole in a small, wide (16:9)
+      framed window, and as the reader scrolls (the section pins) the window opens to full bleed with the film always
+      cover-fitted to it — the camera moving into the frame. Only once it is fully open does the craft copy rise in.
    3. Everything follows the scroll with a little lag. If the reader stops halfway, it finishes (or recedes) by
       itself, calmly, without moving the page — the ink to covered/uncovered, the window to one of its three resting
       states (price film / small window / full bleed). The page never rests on a half-done transition.
@@ -61,7 +61,8 @@
       x.black = document.querySelector('.bd-black');
       x.frame = document.querySelector('.win-frame');
       x.cap = document.querySelector('.win-cap');
-      x.shown = 0; x.clip = ''; x.scale = -1; x.rect = null; x.restart = true;
+      x.shown = 0; x.clip = ''; x.rect = null; x.restart = true;
+      x.shadeEl = layer.querySelector('.bd-shade');
     }
     return x;
   });
@@ -88,12 +89,13 @@
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(measure);
   setTimeout(measure, 1500);
 
-  /* the window's closed rect: portrait 4:5, centred in the visible area above the phone contact bar */
+  /* the window's closed rect: wide 16:9 — the film's own shape, so the whole shot shows in it — centred in the visible
+     area above the phone contact bar. Desktop: half the screen wide (on a 2560 screen that's the 1080p film at ~2/3) */
   function winRect() {
     if (WIN.rect) return WIN.rect;
     var w0, h0, cy;
-    if (isSmall) { w0 = vw * 0.62; h0 = w0 * 1.25; cy = (vh - 68) * 0.5; if (h0 > vh * 0.56) { h0 = vh * 0.56; w0 = h0 * 0.8; } }
-    else { h0 = vh * 0.58; w0 = h0 * 0.8; cy = vh * 0.5; }
+    if (isSmall) { w0 = vw * 0.86; h0 = w0 * 9 / 16; cy = (vh - 68) * 0.5; }
+    else { w0 = Math.min(vw * 0.5, vh * 0.56 * 16 / 9); h0 = w0 * 9 / 16; cy = vh * 0.5; }
     WIN.rect = { l: (vw - w0) / 2, t: cy - h0 / 2, w: w0, h: h0, r: isSmall ? 6 : 8 };
     return WIN.rect;
   }
@@ -104,14 +106,20 @@
   function loadStill(x) {
     if (x.stillLoaded) return;
     x.stillLoaded = true;
-    if (x.isVideo) { x.poster = new Image(); x.poster.decoding = 'async'; x.poster.src = x.media.poster; } // absolute (resolved against <base>)
+    if (x.isVideo) {
+      // the stills sit in data-poster so none of them is fetched with the page (they competed with the hero on a slow
+      // phone); each one arrives ~2.5 screens ahead, for the ink to draw and as the film's poster until it plays
+      var still = x.media.getAttribute('data-poster');
+      x.poster = new Image(); x.poster.decoding = 'async'; x.poster.src = still;
+      x.media.poster = still;
+    }
     else { x.media.src = x.media.getAttribute('data-ink-src'); x.loaded = true; }
   }
   function load(x) {
     if (x.loaded) return;
     loadStill(x);
     x.loaded = true;
-    x.media.src = x.media.getAttribute('data-ink-src');
+    x.media.src = (isSmall && x.media.getAttribute('data-ink-src-m')) || x.media.getAttribute('data-ink-src'); // phones: a lighter cut
     x.media.preload = 'auto';
   }
   function setPlaying(x, on) {
@@ -286,11 +294,33 @@
   function css(el, prop, val) { // write a style only when it changes (no per-frame style invalidation)
     var k = '_' + prop; if (el[k] === val) return; el[k] = val; el.style[prop] = val;
   }
+  // the window's film, cover-fitted (with its object-position) to the rect r and pushed in by kb about the screen centre.
+  // The element is sized to the whole film as a full-screen cover would place it (not to the screen: an object-fit box
+  // the shape of the screen would trim the film before it shrinks into the window — on a phone, to a thin strip);
+  // the stage clips it to the screen. One transform (origin 0 0) maps that box onto the fit, so at full bleed
+  // (r = the screen, kb = 1) it is exactly the plain cover layer, and the hand-over is invisible.
+  function fitWin(x, r, kb) {
+    var a = (x.media.videoWidth && x.media.videoHeight) ? x.media.videoWidth / x.media.videoHeight : 16 / 9;
+    var px = x.pos[0], py = x.pos[1];
+    var w0 = Math.max(vw, vh * a), h0 = w0 / a, l0 = (vw - w0) * px, t0 = (vh - h0) * py;            // full-screen cover
+    var box = l0.toFixed(1) + ',' + t0.toFixed(1) + ',' + w0.toFixed(1) + ',' + h0.toFixed(1);
+    if (box !== x.box) { // only on resize / when the film's shape is known — never per frame
+      x.box = box; var st = x.media.style;
+      st.left = l0.toFixed(1) + 'px'; st.top = t0.toFixed(1) + 'px'; st.right = 'auto'; st.bottom = 'auto';
+      st.width = w0.toFixed(1) + 'px'; st.height = h0.toFixed(1) + 'px';
+    }
+    var w = Math.max(r.w, r.h * a), h = w / a, l = r.l + (r.w - w) * px, t = r.t + (r.h - h) * py;  // where it should be
+    if (kb !== 1) { var cx = vw / 2, cy = vh / 2; l = cx - (cx - l) * kb; t = cy - (cy - t) * kb; w *= kb; }
+    var k = w / w0;
+    // the element's own origin sits at (l0, t0): move it to (l, t), then scale about it
+    var tf = 'translate3d(' + (l - l0).toFixed(2) + 'px,' + (t - t0).toFixed(2) + 'px,0) scale(' + k.toFixed(5) + ')';
+    if (tf !== x.tf) { x.tf = tf; x.media.style.transformOrigin = '0 0'; x.media.style.transform = tf; }
+  }
   function renderWindow(x, base) {
     // a fresh line every time the window appears (checked every frame: the film may get ready while the window rests)
     if (x.v < 0.001 || base >= WIN_I) x.restart = true;
     else if (x.restart && x.isVideo && x.media.readyState >= 1) { x.restart = false; try { x.media.currentTime = 0; } catch (e) {} }
-    var key = x.v + '|' + base + '|' + vw + '|' + vh;
+    var key = x.v + '|' + base + '|' + vw + '|' + vh + '|' + (x.media.videoWidth || 0);
     if (key === x.rkey) return; x.rkey = key;
     var v = x.v, ve = clamp01(v / WIN_K), vp = clamp01((v - WIN_K) / (1 - WIN_K));
     var isBase = base === WIN_I, below = base < WIN_I;
@@ -307,11 +337,15 @@
       if (clip !== x.clip) { x.clip = clip; x.layer.style.clipPath = clip; x.layer.style.webkitClipPath = clip; }
       css(x.layer, 'opacity', ve.toFixed(3));
     } else if (x.clip !== '') { x.clip = ''; x.layer.style.clipPath = ''; x.layer.style.webkitClipPath = ''; css(x.layer, 'opacity', ''); }
-    // the film inside counter-scales: the camera moves into the frame
-    if (!isBase) {
-      var sc = reduced ? 1 : 1.15 - 0.15 * easeCam(vp);
-      if (Math.abs(sc - x.scale) > 0.0004) { x.scale = sc; x.media.style.transform = 'scale(' + sc.toFixed(4) + ')'; x.kb = -1; }
-    }
+    // the film follows the window: the whole shot in the small frame, growing with it to full bleed (no extra zoom)
+    if (!isBase && !reduced) {
+      var wr = winRect(), wk = below && ve > 0.001 ? 1 - easeCam(vp) : 0;
+      var wl = wr.l * wk, wt = wr.t * wk;
+      fitWin(x, { l: wl, t: wt, w: vw - 2 * wl, h: vh - wt - (vh - wr.t - wr.h) * wk }, 1);
+      x.kb = -1;
+      // the text shade only matters once the copy can rise (window open): the small window shows the film clear
+      css(x.shadeEl, 'opacity', below && ve > 0.001 ? (0.35 + 0.65 * easeCam(vp)).toFixed(3) : '');
+    } else if (isBase) css(x.shadeEl, 'opacity', '');
     // hairline frame + its caption, both gone by the time the window reaches the edges
     var showWin = below && !reduced ? ve : 0;
     var fo = showWin * (1 - smooth(0.62, 0.96, vp)), co = (below && !reduced ? smooth(0.45, 1, ve) : 0) * (1 - smooth(0, 0.3, vp));
@@ -425,11 +459,16 @@
         setPlaying(x, x.loaded && !past && (i === base || i === active || (x.t > 0 && x.t < 1)));
       }
       if (on && !lowGPU) {
-        // a slow push-in while the section is read (light mode keeps the film still: no re-render of a scaled film per frame) (starts at 1, exactly where the transition left the film)
+        // a slow push-in while the section is read (starts at 1, exactly where the transition left the film);
+        // light mode keeps the film still: no re-render of a scaled film per frame
         var from = x.kind === 'window' ? x.top + vh * WIN_TRAVEL : x.top - vh * (1 - SPAN);
         var len = x.kind === 'window' ? Math.max(1, x.h - vh * WIN_TRAVEL) : Math.max(1, x.h);
         var kb = 1 + 0.045 * clamp01((y - from) / len);
-        if (Math.abs(kb - x.kb) > 0.0004) { x.kb = kb; x.scale = -1; x.media.style.transform = 'scale(' + kb.toFixed(4) + ')'; }
+        if (Math.abs(kb - x.kb) > 0.0004) {
+          x.kb = kb;
+          if (x.kind === 'window') fitWin(x, { l: 0, t: 0, w: vw, h: vh }, kb);
+          else x.media.style.transform = 'scale(' + kb.toFixed(4) + ')';
+        }
       }
     }
     showCanvas(drawn);

@@ -1,4 +1,6 @@
-/* ============ LIZ VAMPIRE TATTOO — cinematic scroll ============ */
+/* ============ LIZ VAMPIRE TATTOO — cinematic scroll ============
+   Hero, loader, raf loop, lazy films, menu, gallery, lightbox, studio strip, conversion tracking.
+   The film stage after the hero (ink transitions, the craft window, the text rises) is js/ink.js. */
 (function () {
   'use strict';
 
@@ -40,7 +42,8 @@
 
   /* ---------- Lenis smooth scroll (desktop only; touch scroll is native) ---------- */
   var lenis = null;
-  if (!isSmall && !reducedMotion && window.Lenis) {
+  // light mode (no working graphics card, flagged in <head>): native scrolling — smoothing at a low frame rate feels like lag
+  if (!isSmall && !reducedMotion && !window.__lowGPU && window.Lenis) {
     lenis = new Lenis({ duration: 1.25, smoothWheel: true });
     window.__lenis = lenis;
   }
@@ -94,97 +97,6 @@
   var updaters = [];
 
 
-  /* ---------- CRAFT — bitmap-backed scrub ---------- */
-  var manifest = window.FRAMES || {};
-
-  function buildScrub(section) {
-    var key = section.getAttribute('data-scrub');
-    // small screens get the lighter frame set when one exists
-    var cfg = (isSmall && manifest[key + '_m']) || manifest[key];
-    var canvas = section.querySelector('.scrub-canvas');
-    if (!cfg || !canvas || reducedMotion) return;
-    var ctx = canvas.getContext('2d');
-    var frames = new Array(cfg.count); // ImageBitmap | HTMLImageElement
-    var current = -1;
-
-    function src(i) {
-      var n = String(i + 1);
-      while (n.length < cfg.pad) n = '0' + n;
-      return cfg.path + n + '.' + cfg.ext;
-    }
-
-    // frames are fetched + decoded OFF the scroll path (createImageBitmap),
-    // and only once the section approaches the viewport
-    var started = false;
-    function preload() {
-      if (started) return;
-      started = true;
-      var next = 0, inflight = 0, CONC = 8;
-      function pump() {
-        while (inflight < CONC && next < cfg.count) {
-          (function (i) {
-            inflight++; next++;
-            var done = function (bmp) {
-              frames[i] = bmp || undefined;
-              inflight--;
-              if (i === current || (i === 0 && current === -1)) { current = -1; wake(); }
-              pump();
-            };
-            if (window.createImageBitmap) {
-              fetch(src(i)).then(function (r) { return r.blob(); })
-                .then(function (b) { return createImageBitmap(b); })
-                .then(done).catch(function () { done(null); });
-            } else {
-              var im = new Image();
-              im.onload = function () { done(im); };
-              im.onerror = function () { done(null); };
-              im.src = src(i);
-            }
-          })(next);
-        }
-      }
-      pump();
-    }
-    new IntersectionObserver(function (entries, obs) {
-      if (entries[0].isIntersecting) { preload(); obs.disconnect(); }
-    }, { rootMargin: '150% 0%' }).observe(section);
-
-    function nearestLoaded(i) {
-      for (var k = i; k >= 0; k--) if (frames[k]) return frames[k];
-      for (var k2 = i; k2 < cfg.count; k2++) if (frames[k2]) return frames[k2];
-      return null;
-    }
-
-    function resize() {
-      var dpr = Math.min(window.devicePixelRatio || 1, 2);
-      canvas.width = canvas.clientWidth * dpr;
-      canvas.height = canvas.clientHeight * dpr;
-      current = -1;
-    }
-    window.addEventListener('resize', resize);
-    resize();
-
-    function draw(img) {
-      var iw = img.width || img.naturalWidth, ih = img.height || img.naturalHeight;
-      var cw = canvas.width, ch = canvas.height;
-      var s = Math.max(cw / iw, ch / ih);
-      var w = iw * s, h = ih * s;
-      ctx.drawImage(img, (cw - w) / 2, (ch - h) / 2, w, h);
-    }
-
-    updaters.push(function () {
-      var p = sectionProgress(section);
-      var frame = Math.round(p * (cfg.count - 1));
-      if (frame !== current) {
-        var img = nearestLoaded(frame);
-        if (img) { draw(img); current = frame; state[key] = { frame: frame, progress: p }; }
-      }
-      updateStages(section, p);
-    });
-  }
-
-  document.querySelectorAll('.scrub-section').forEach(buildScrub);
-
   /* ---------- HERO — canvas ink mask zoom ----------
      Stencil is redrawn from vectors every frame (black rect, letters punched
      out with destination-out) so it is pixel-identical scrolling down and
@@ -223,6 +135,10 @@
       // letterforms alias badly. Render at min 2x, up to 3x on hi-DPI, for crisp edges.
       var dpr = Math.min(Math.max(window.devicePixelRatio || 1, 2), 3);
       if (isSmall && moving) dpr = Math.min(dpr, 2); // in motion nobody sees the third pixel; the frame gets much cheaper
+      // pixel budget: a 2560-wide monitor at 2x is a 13-megapixel canvas redrawn on every frame of the zoom; cap it near 4K
+      // (1080p screens keep their full 2x; phones are far under the cap)
+      dpr = Math.min(dpr, Math.max(1, Math.sqrt(8.3e6 / Math.max(1, canvas.clientWidth * canvas.clientHeight))));
+      if (window.__lowGPU) dpr = 1; // light mode: every pixel is drawn by the CPU
       canvas.width = canvas.clientWidth * dpr;
       canvas.height = canvas.clientHeight * dpr;
       domLayout = null; // phone title layout is re-read from the DOM
@@ -405,6 +321,8 @@
     loaderHidden = true;
     document.getElementById('loader').classList.add('done');
     window.__heroReady = true;
+    // the page below the hero (film stage, text system) loads only now, so it never delays the hero's first frame
+    try { window.dispatchEvent(new Event('herofirstframe')); } catch (e) {}
   }
   if (reducedMotion) hideLoader(); // static layout: nothing to wait for
   setTimeout(hideLoader, 1000);    // hard cap

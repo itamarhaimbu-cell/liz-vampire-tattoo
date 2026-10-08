@@ -162,16 +162,28 @@ function check(name, ok, detail) {
     `grid mismatch ${mismatchPct.toFixed(2)}% opaqueShare=${opaqueShare.toFixed(2)} cssOpacity=${cssOpacityUp}`);
   await scrollToHeroP(0);
 
-  // craft scrub
-  await page.evaluate(() => {
-    const sec = document.querySelector('#craft');
-    const y = sec.offsetTop + (sec.offsetHeight - innerHeight) * 0.5;
-    if (window.__lenis) window.__lenis.scrollTo(y, { immediate: true }); else window.scrollTo(0, y);
-  });
-  await new Promise(r => setTimeout(r, 1200));
-  const lineFrame = await page.evaluate(() => (window.__scrubState.line || {}).frame);
+  // craft: the wide window (js/ink.js) — small 16:9 window on black, then open to full bleed with the copy risen in
+  async function craftAt(pg, at) { // at: 'small' = window resting small, 'open' = fully open + reading hold
+    await pg.evaluate((at) => {
+      const I = window.__ink, W = I.win, vh = innerHeight;
+      const y = at === 'small' ? W.top - vh * 0.06 : W.top + vh * I.WIN_TRAVEL + vh * 0.2;
+      if (window.__lenis) window.__lenis.scrollTo(y, { immediate: true }); else window.scrollTo(0, y);
+    }, at);
+    await new Promise(r => setTimeout(r, 2200));
+    return pg.evaluate(() => {
+      const I = window.__ink, W = I.win, m = W.media, f = document.querySelector('.win-frame').getBoundingClientRect();
+      return { v: +W.v.toFixed(3), copy: I.copyShown(), src: (m.currentSrc || '').replace(/^.*\/assets\//, ''), playing: !m.paused,
+        frame: { w: Math.round(f.width), h: Math.round(f.height), op: +getComputedStyle(document.querySelector('.win-frame')).opacity } };
+    });
+  }
+  const cSmall = await craftAt(page, 'small');
+  await page.screenshot({ path: SHOT('04-craft-window.png') });
+  const cOpen = await craftAt(page, 'open');
   await page.screenshot({ path: SHOT('04-craft.png') });
-  check('craft scrub active', lineFrame > 20 && lineFrame < 90, `line frame ${lineFrame} of 97`);
+  check('craft window: rests small and wide (16:9) on black with the HD film, then opens to full bleed and the copy rises',
+    Math.abs(cSmall.v - 0.35) < 0.02 && !cSmall.copy && cSmall.frame.op > 0.9 && Math.abs(cSmall.frame.w / cSmall.frame.h - 16 / 9) < 0.03 &&
+    cOpen.v === 1 && cOpen.copy && /bw\/line_hd\.mp4$/.test(cOpen.src) && cOpen.playing,
+    JSON.stringify({ small: cSmall, open: cOpen }));
 
   // gallery hover -> color
   await page.evaluate(() => {
@@ -556,14 +568,12 @@ function check(name, ok, detail) {
     mScale > 3 && mLate.maskOpacity < 0.05,
     `scale@0.5=${mScale.toFixed(2)} fade@0.95=${mLate.maskOpacity}`);
 
-  // craft scrub on the light frame set
-  await mp.evaluate(() => {
-    const sec = document.querySelector('#craft');
-    window.scrollTo(0, sec.offsetTop + (sec.offsetHeight - innerHeight) * 0.5);
-  });
-  await new Promise(r => setTimeout(r, 1600));
-  const mLine = await mp.evaluate(() => (window.__scrubState.line || {}).frame);
-  check('mobile: craft scrub active on light frames', mLine > 10 && mLine < 65, `frame ${mLine} of 72`);
+  // craft window on a phone: the lighter 720p cut, wide window, opens with the copy
+  const mSmall = await craftAt(mp, 'small');
+  const mOpen = await craftAt(mp, 'open');
+  check('mobile: craft window rests small and wide, opens with the copy, on the lighter 720p film',
+    Math.abs(mSmall.v - 0.35) < 0.02 && Math.abs(mSmall.frame.w / mSmall.frame.h - 16 / 9) < 0.03 && mOpen.v === 1 && mOpen.copy &&
+    /bw\/line\.mp4$/.test(mOpen.src), JSON.stringify({ small: mSmall, open: mOpen }));
 
   // studio swipe + sticky bar + clean console
   const mobStrip = await mp.evaluate(() => {
@@ -603,6 +613,12 @@ function check(name, ok, detail) {
       for (let y = 0; y < document.body.scrollHeight; y += 700) { window.scrollTo(0, y); await new Promise(r => setTimeout(r, 30)); }
       window.scrollTo(0, 0);
       document.querySelectorAll('.reveal').forEach(e => e.classList.add('visible'));
+    });
+    // the text rises / fades in on a clock (GSAP, once): audit the settled page, not a half-faded button
+    await pg.evaluate(async () => {
+      const pending = () => [...document.querySelectorAll('[data-fade], [data-split], [data-rise-group] > *')]
+        .filter(e => e.offsetParent !== null && parseFloat(getComputedStyle(e).opacity) < 0.99).length;
+      for (let i = 0; i < 40 && pending(); i++) await new Promise(r => setTimeout(r, 150));
     });
     await wait(600);
     await pg.addScriptTag({ content: AXE });
@@ -962,13 +978,13 @@ function check(name, ok, detail) {
     const filmRequested = reqs.filter(u => /hero_(sd|hd)\.mp4/.test(u));
     check('phone: hero shows the small poster still and downloads NO hero film',
       film.src === '' && /hero-poster-m\.jpg$/.test(film.poster) && film.posterOk && filmRequested.length === 0, JSON.stringify({ film, filmRequested }));
-    const earlyFilms = reqs.filter(u => /(studio|reveal|line)\.mp4/.test(u));
+    const earlyFilms = reqs.filter(u => /(studio|reveal|line|line_hd)\.mp4/.test(u));
     check('phone: below-the-fold films are not downloaded at page load', earlyFilms.length === 0, earlyFilms.join(' | '));
     check('phone: both bar buttons are tappable from the first frame (above the loading screen)', barAtDCL && barAtDCL.tappable, JSON.stringify(barAtDCL));
     // scroll to the story film + gallery: film starts on approach, grid uses the 600px copies
     await pp.evaluate(() => document.getElementById('story').scrollIntoView());
     await new Promise(r => setTimeout(r, 1500));
-    const story = await pp.evaluate(() => { const v = document.querySelector('#story video'); return { src: v.currentSrc, playing: !v.paused }; });
+    const story = await pp.evaluate(() => { const v = document.querySelector('.bd[data-bd="story"] video'); return { src: v.currentSrc, playing: !v.paused }; });
     await pp.evaluate(() => document.querySelector('.gallery-grid').scrollIntoView());
     await new Promise(r => setTimeout(r, 1500));
     const grid = await pp.evaluate(() => { const i = document.querySelector('.gitem img'); return { cur: i.currentSrc, full: i.src }; });
