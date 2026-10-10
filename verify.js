@@ -834,13 +834,17 @@ function check(name, ok, detail) {
       const tWide = await tap(pg, wide), tNarrow = await tap(pg, narrow);
       barGeo[state] = { wide: { x: tWide.geo.x, w: tWide.geo.w, h: tWide.geo.h }, narrow: { x: tNarrow.geo.x, w: tNarrow.geo.w, h: tNarrow.geo.h }, barH };
       const wideText = open ? /התקשרו לייעוץ חינם.*פתוחים עכשיו/ : /שלחו וואטסאפ לייעוץ חינם.*סגורים עכשיו, נחזור אליכם/;
-      const narrowText = open ? /^וואטסאפ/ : /^חיוג$/;
-      const callName = await pg.evaluate(() => document.querySelector('.mobile-bar .mb-call').getAttribute('aria-label'));
+      const narrowText = open ? /^וואטסאפ/ : /^חיוג · 03-9503487$/; // "חיוג" shown + the number for screen readers
+      // the call link is named by its visible words (+ the number for screen readers), no aria-label: WCAG 2.5.3
+      const callEl = await pg.$('.mobile-bar .mb-call');
+      const callName = ((await pg.accessibility.snapshot({ root: callEl, interestingOnly: false })) || {}).name || '';
+      const callAria = await callEl.evaluate(a => a.getAttribute('aria-label'));
+      const callShown = (open ? tWide : tNarrow).geo.text.replace(/\s+/g, '');
       check(`phone bar (${state}): ${open ? 'CALL' : 'WHATSAPP'} is the wide button, ${open ? 'WhatsApp' : 'call'} the narrow one — visible, uncovered, ≥44px, bar 68px, labels right`,
         new RegExp(open ? 'studio-open' : 'studio-closed').test(cls) && barH === 68 &&
         tWide.geo.shown && tWide.geo.uncovered && tWide.geo.w >= 250 && tWide.geo.h >= 44 && wideText.test(tWide.geo.text) &&
         tNarrow.geo.shown && tNarrow.geo.uncovered && tNarrow.geo.w >= 44 && tNarrow.geo.w <= 90 && tNarrow.geo.h >= 44 && narrowText.test(tNarrow.geo.text) &&
-        /חיוג לסטודיו: 03-9503487$/.test(callName) && (open ? /^התקשרו לייעוץ חינם/.test(callName) : callName === 'חיוג לסטודיו: 03-9503487'),
+        callAria === null && callName.replace(/\s+/g, '').includes(callShown) && /03-9503487$/.test(callName) && (open ? /^התקשרו לייעוץ חינם/.test(callName) : /^חיוג/.test(callName)),
         JSON.stringify({ cls: cls.match(/studio-\w+/g), barH, wide: tWide.geo, narrow: tNarrow.geo, callName }));
       check(`phone bar (${state}): each button fires exactly its own conversion (one site event, one Ads conversion, only its own label on the wire)`,
         (open ? firedOnlyCall(tWide) && firedOnlyWa(tNarrow) : firedOnlyWa(tWide) && firedOnlyCall(tNarrow)),
@@ -869,10 +873,10 @@ function check(name, ok, detail) {
         const flipped = await pg.evaluate((ms) => {
           window.__studioNow = ms; window.__studioRefresh();
           const wa = document.querySelector('.mobile-bar .mb-wa').getBoundingClientRect(), call = document.querySelector('.mobile-bar .mb-call');
-          return { cls: document.documentElement.className.match(/studio-\w+/g), waW: Math.round(wa.width), callW: Math.round(call.getBoundingClientRect().width), callName: call.getAttribute('aria-label') };
+          return { cls: document.documentElement.className.match(/studio-\w+/g), waW: Math.round(wa.width), callW: Math.round(call.getBoundingClientRect().width), callAria: call.getAttribute('aria-label'), callText: call.innerText.replace(/\s+/g, ' ').trim() };
         }, CLOCK.tueNight);
-        check('hours flip live (no reload): at closing time WhatsApp becomes the wide button and the call label resets',
-          flipped.cls.length === 1 && flipped.cls[0] === 'studio-closed' && flipped.waW >= 250 && flipped.callW <= 90 && flipped.callName === 'חיוג לסטודיו: 03-9503487', JSON.stringify(flipped));
+        check('hours flip live (no reload): at closing time WhatsApp becomes the wide button and the call button shrinks to "חיוג"',
+          flipped.cls.length === 1 && flipped.cls[0] === 'studio-closed' && flipped.waW >= 250 && flipped.callW <= 90 && flipped.callAria === null && flipped.callText === 'חיוג · 03-9503487', JSON.stringify(flipped));
       }
       await pg.browserContext().close();
     }

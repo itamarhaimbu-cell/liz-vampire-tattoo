@@ -37,7 +37,6 @@
      Sets html.studio-open / html.studio-closed before the first paint — CSS does the swap, both links stay in the HTML.
      No class at all (JS off, or no time-zone support) = the WhatsApp-first layout. */
   var OPEN_HOURS = { Sun: [11, 20], Mon: [11, 20], Tue: [11, 20], Wed: [11, 20], Thu: [11, 20], Fri: [11, 16] };
-  var CALL_LABEL = 'חיוג לסטודיו: 03-9503487';
   function studioOpen() {
     try {
       // window.__studioNow lets the tests pin the clock; visitors always get the real time
@@ -56,9 +55,6 @@
     if (open === null) return;
     root.classList.toggle('studio-open', open);
     root.classList.toggle('studio-closed', !open);
-    // the wide button's accessible name has to contain the words it shows
-    var call = document.querySelector('.mobile-bar .mb-call');
-    if (call) call.setAttribute('aria-label', (open ? 'התקשרו לייעוץ חינם — ' : '') + CALL_LABEL);
   }
   applyHours();
   setInterval(applyHours, 60000); // flips at 11:00 / 20:00 / Friday 16:00 without a reload
