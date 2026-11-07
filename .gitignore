@@ -4,3 +4,8 @@ assets/video/*_raw.mp4
 assets/video/machine.mp4
 assets/frames/hero/
 assets/frames/machine/
+
+# Secrets: never commit environment files (templates stay tracked)
+.env
+.env.*
+!.env.example
