@@ -38,4 +38,8 @@
   document.querySelectorAll('a[href*="wa.me/972542264377"]').forEach(function (a) {
     a.addEventListener('click', function () { track('whatsapp_click'); });
   });
+  /* plain GA4 events for other links (no Ads label, so never a conversion): <a data-track="event_name"> */
+  document.querySelectorAll('a[data-track]').forEach(function (a) {
+    a.addEventListener('click', function () { track(a.getAttribute('data-track')); });
+  });
 })();

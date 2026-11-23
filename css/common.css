@@ -200,6 +200,17 @@ html.a11y-still .styles-list li{background-position:100% 0}
 .foot-links a{color:var(--bone-dim);border-bottom:1px solid var(--line);padding-bottom:.1rem}
 .foot-links a:hover{color:var(--bone);border-color:var(--bone)}
 
+/* ---------- inner pages: sticky top bar that hides while scrolling down, returns on scroll up (js/common.js headroom) ----------
+   under the accessibility tab (9050), its menu (9400) and the phone bar (9550) */
+.page-top,.legal-top{
+  position:sticky;top:0;z-index:9000;background:var(--black,#060606);
+  transition:transform .28s cubic-bezier(.2,.8,.2,1);
+}
+.page-top.is-hidden,.legal-top.is-hidden{transform:translateY(-100%)}
+.page-top:focus-within,.legal-top:focus-within{transform:none}
+html.a11y-still .page-top,html.a11y-still .legal-top{transition:none}
+@media (prefers-reduced-motion:reduce){.page-top,.legal-top{transition:none}}
+
 /* ---------- policy pages (accessibility / privacy / terms) ---------- */
 .legal-top{
   display:flex;align-items:center;justify-content:space-between;

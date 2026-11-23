@@ -204,11 +204,32 @@
     });
   }
 
+  /* ---------- inner pages: the top bar slides away while reading down and comes back on any scroll up ----------
+     service pages (.page-top) and policy pages (.legal-top); the homepage bar is fixed and always visible already.
+     CSS makes the bar sticky; this only toggles .is-hidden. Keyboard focus inside the bar always shows it (CSS). */
+  function headroom() {
+    var bar = document.querySelector('.page-top, .legal-top');
+    if (!bar) return;
+    var lastY = Math.max(0, window.scrollY), queued = false;
+    function update() {
+      queued = false;
+      var y = Math.max(0, window.scrollY), dy = y - lastY;
+      if (y <= bar.offsetHeight) { bar.classList.remove('is-hidden'); lastY = y; return; } // near the top: always shown
+      if (Math.abs(dy) < 8) return; // ignore tiny jitter (iOS bounce, trackpad noise)
+      bar.classList.toggle('is-hidden', dy > 0);
+      lastY = y;
+    }
+    window.addEventListener('scroll', function () {
+      if (!queued) { queued = true; requestAnimationFrame(update); }
+    }, { passive: true });
+  }
+
   function init() {
     applyHours(); // the bar exists now: set its label for the current state
     if (stillVideo) pauseVideos();
     buildMenu();
     cookieNote();
+    headroom();
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();

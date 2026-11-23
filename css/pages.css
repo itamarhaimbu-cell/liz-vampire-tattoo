@@ -56,6 +56,16 @@ img{max-width:100%;height:auto;display:block}
 .page ul.list li{margin-bottom:.4rem}
 .page strong{color:var(--bone);font-weight:600}
 .page p a,.page li a{color:var(--bone);text-decoration:underline;text-underline-offset:.2em}
+.page h3.sub{font-family:var(--serif);font-weight:400;font-size:1.25rem;line-height:1.35;color:var(--bone);margin:1.6rem 0 .3rem}
+
+/* ---------- starting price (/tattoos/ + /prices/): the one number price searchers came for ---------- */
+.price-from{display:flex;flex-wrap:wrap;align-items:baseline;gap:.2rem .7rem;margin-top:1rem;padding:1.1rem 1.3rem;border:1px solid var(--line);border-radius:12px;background:var(--ink)}
+.page .price-from p{margin:0}
+.page .price-from .pf-label{font-size:1.2rem;color:var(--bone)}
+.page .price-from .pf-num{font-family:var(--serif);font-size:clamp(2.2rem,6vw,3rem);line-height:1.1;color:var(--bone)}
+/* Suez One draws ₪ like two Hebrew letters ("שח"): the sign comes from the body font */
+.page .price-from .pf-cur{font-family:var(--sans);font-weight:600;font-size:.72em;margin-inline-end:.06em}
+.page .price-from .pf-note{flex-basis:100%;margin-top:.4rem;font-size:1rem;line-height:1.7}
 
 /* ---------- work grid ---------- */
 .work-grid{list-style:none;display:grid;grid-template-columns:repeat(3,1fr);gap:.8rem;margin-top:1.2rem}
