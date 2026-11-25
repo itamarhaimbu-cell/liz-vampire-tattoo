@@ -28,7 +28,7 @@
 .lp-why li{border:1px solid var(--line);border-radius:12px;padding:1.1rem 1.2rem;background:var(--ink)}
 .page .lp-why strong,.page .lp-steps strong{display:block;font-family:var(--serif);font-weight:400;font-size:1.2rem;line-height:1.35;margin-bottom:.25rem}
 .lp-why span,.lp-steps span{display:block;line-height:1.7}
-.lp-steps{list-style:none;counter-reset:step;display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-top:.8rem}
+.lp-steps{list-style:none;counter-reset:step;display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-top:.8rem}
 .lp-steps li{counter-increment:step;border-top:1px solid var(--line);padding-top:.9rem}
 .lp-steps li::before{content:counter(step);display:block;font-family:var(--serif);font-size:1.7rem;line-height:1;color:var(--bone-dim);margin-bottom:.45rem}
 
